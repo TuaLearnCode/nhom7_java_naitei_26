@@ -2,6 +2,7 @@ package com.nhom7.coworkingspace.service;
 
 import com.nhom7.coworkingspace.dto.request.VenueRequest;
 import com.nhom7.coworkingspace.dto.response.PageResponse;
+import com.nhom7.coworkingspace.dto.response.VenueDetailResponse;
 import com.nhom7.coworkingspace.dto.response.VenueResponse;
 import com.nhom7.coworkingspace.enums.VenueStatus;
 
@@ -29,6 +30,9 @@ public interface VenueService {
     /** List non-deleted venues for moderator/admin management. */
     PageResponse<VenueResponse> getAllVenues(int page, int size, VenueStatus status);
 
+    /** Get a complete venue moderation view including host, amenities, and spaces. */
+    VenueDetailResponse getVenueDetail(Long venueId);
+
     /**
      * Update a venue owned by the currently authenticated HOST.
      *
@@ -48,7 +52,12 @@ public interface VenueService {
      * @param moderatorEmail email of the authenticated moderator/admin (from SecurityContext)
      * @return updated venue details
      */
-    VenueResponse updateVenueStatus(Long venueId, VenueStatus newStatus, String moderatorEmail);
+    VenueResponse updateVenueStatus(
+            Long venueId,
+            VenueStatus newStatus,
+            String reason,
+            String moderatorEmail
+    );
 
     /**
      * Soft delete a venue owned by the currently authenticated HOST.

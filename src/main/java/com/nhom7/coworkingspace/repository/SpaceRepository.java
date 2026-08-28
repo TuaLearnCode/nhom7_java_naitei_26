@@ -30,6 +30,7 @@ public interface SpaceRepository extends JpaRepository<Space, Long>, JpaSpecific
     @Query("SELECT s FROM Space s WHERE s.id = :id")
     Optional<Space> findByIdForUpdate(@Param("id") Long id);
 
+    @EntityGraph(attributePaths = {"venue", "hosts"})
     List<Space> findByVenueId(Long venueId);
 
     @EntityGraph(attributePaths = {"venue"})

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -141,12 +142,28 @@ public class StatisticsServiceImpl implements StatisticsService {
                 pageSize,
                 Sort.by(Sort.Direction.DESC, "paidAt"));
 
+        String keyword = normalize(request.getKeyword());
+        PaymentStatus status = parsePaymentStatus(request.getStatus());
+        String paymentMethod = normalize(request.getPaymentMethod());
+        LocalDateTime fromPaidAt = request.getFromDate() == null
+                ? LocalDateTime.of(1970, 1, 1, 0, 0)
+                : request.getFromDate().atStartOfDay();
+        LocalDateTime toPaidAtExclusive = request.getToDate() == null
+                ? LocalDateTime.of(9999, 12, 31, 23, 59)
+                : request.getToDate().plusDays(1).atStartOfDay();
+
         Page<PaymentResponse> payments = paymentRepository.searchPayments(
-                        normalize(request.getKeyword()),
-                        parsePaymentStatus(request.getStatus()),
-                        normalize(request.getPaymentMethod()),
-                        request.getFromDate() == null ? null : request.getFromDate().atStartOfDay(),
-                        request.getToDate() == null ? null : request.getToDate().plusDays(1).atStartOfDay(),
+                        List.of(PaymentStatus.values()),
+                        keyword == null,
+                        keyword == null ? "" : keyword,
+                        status == null,
+                        status == null ? PaymentStatus.COMPLETED : status,
+                        paymentMethod == null,
+                        paymentMethod == null ? "" : paymentMethod,
+                        request.getFromDate() == null,
+                        fromPaidAt,
+                        request.getToDate() == null,
+                        toPaidAtExclusive,
                         pageable)
                 .map(this::toPaymentResponse);
 

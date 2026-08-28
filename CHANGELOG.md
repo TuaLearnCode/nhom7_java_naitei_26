@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 File ghi lại những thay đổi của dự án.
 
@@ -41,6 +41,23 @@ File ghi lại những thay đổi của dự án.
 - Trang `GET /admin/statistics` dành riêng cho Admin, hiển thị tổng số user, booking thành công, venue hoạt động và tổng doanh thu.
 - Biểu đồ doanh thu 12 tháng, bộ chọn năm, trạng thái không có dữ liệu và trạng thái lỗi.
 - Giao diện responsive cùng kiểm thử MVC và phân quyền cho dashboard.
+### 2026-08-24 - [Admin Inherit Moderator Permissions]
+
+**Người thực hiện:** [Trần Trung Hiếu]
+
+#### Added
+
+- Added RBAC configuration to allow `ADMIN` users to access Moderator APIs under `/api/moderator/**`.
+- Added security tests to verify access permissions for `ADMIN`, `MODERATOR`, `USER`, and `HOST`.
+- Added test coverage to ensure `MODERATOR` cannot access Admin-only APIs.
+- Added test coverage for unauthenticated access to Moderator APIs.
+
+#### Changed
+
+- Updated security authorization rules so `ADMIN` inherits `MODERATOR` access while Admin-only APIs remain restricted to `ADMIN`.
+
+---
+
 
 ### 2026-08-27 - Space Management API & Logic (Create, View, Edit, Delete, Managers) (#99344)
 
@@ -982,6 +999,8 @@ _Template cho các lần cập nhật tiếp theo:_
 ```md
 
 ## [Unreleased]
+
+
 
 ### YYYY-MM-DD - [Tên tính năng]
 

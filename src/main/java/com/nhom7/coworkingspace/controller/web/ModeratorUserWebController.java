@@ -34,7 +34,8 @@ public class ModeratorUserWebController {
     private final MessageSource messageSource;
 
     /**
-     * Render HTML page for moderator/admin to view, search, filter, and paginate users.
+     * Render HTML page for moderator/admin to view, search, filter, and paginate
+     * users.
      *
      * @param request search parameters
      * @param model   Spring MVC model
@@ -61,6 +62,16 @@ public class ModeratorUserWebController {
         model.addAttribute(
                 "statuses",
                 UserStatus.values()
+        );
+
+        /*
+         * Email của Moderator/Admin đang đăng nhập.
+         * users.html dùng giá trị này để xác định
+         * tài khoản đang được mở có phải chính mình hay không.
+         */
+        model.addAttribute(
+                "currentUserEmail",
+                authentication.getName()
         );
 
         boolean isCurrentAdmin =

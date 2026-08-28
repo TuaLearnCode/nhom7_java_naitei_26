@@ -1,9 +1,12 @@
 package com.nhom7.coworkingspace.dto.request;
 
+import com.nhom7.coworkingspace.util.ValidOperatingHours;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,6 +19,8 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ValidOperatingHours
+@Schema(description = "Request body for creating a space")
 public class SpaceCreateRequest {
 
     @NotBlank(message = "{validation.space.name.required}")
@@ -36,13 +41,20 @@ public class SpaceCreateRequest {
     private BigDecimal price;
 
     @NotBlank(message = "{validation.space.priceUnit.required}")
+    @Pattern(
+            regexp = "(?i)^(HOUR|DAY|MONTH|PER_HOUR|PER_DAY|PER_MONTH)$",
+            message = "{validation.space.priceUnit.invalid}"
+    )
+    @Schema(example = "HOUR", allowableValues = {"HOUR", "DAY", "MONTH", "PER_HOUR", "PER_DAY", "PER_MONTH"})
     private String priceUnit;
 
     @NotNull(message = "{validation.space.openTime.required}")
     @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
+    @Schema(type = "string", format = "time", example = "08:00:00")
     private LocalTime openTime;
 
     @NotNull(message = "{validation.space.closeTime.required}")
     @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
+    @Schema(type = "string", format = "time", example = "18:00:00")
     private LocalTime closeTime;
 }

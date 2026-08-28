@@ -3,6 +3,7 @@ package com.nhom7.coworkingspace.controller.api;
 import com.nhom7.coworkingspace.dto.request.UpdateVenueStatusRequest;
 import com.nhom7.coworkingspace.dto.response.ApiResponse;
 import com.nhom7.coworkingspace.dto.response.PageResponse;
+import com.nhom7.coworkingspace.dto.response.VenueDetailResponse;
 import com.nhom7.coworkingspace.dto.response.VenueResponse;
 import com.nhom7.coworkingspace.enums.VenueStatus;
 import com.nhom7.coworkingspace.service.VenueService;
@@ -42,6 +43,24 @@ public class ModeratorVenueController {
         return ResponseEntity.ok(ApiResponse.success(response, message));
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN')")
+    @Operation(
+            summary = "Get Venue Detail",
+            description = "Returns venue information together with its host, amenities, and spaces."
+    )
+    public ResponseEntity<ApiResponse<VenueDetailResponse>> getVenueDetail(
+            @PathVariable Long id
+    ) {
+        VenueDetailResponse response = venueService.getVenueDetail(id);
+        String message = messageSource.getMessage(
+                "venue.detail.success",
+                null,
+                LocaleContextHolder.getLocale()
+        );
+        return ResponseEntity.ok(ApiResponse.success(response, message));
+    }
+
     // Approve or block a venue. A HOST can never reach this - status changes are moderator/admin only.
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN')")
@@ -53,7 +72,12 @@ public class ModeratorVenueController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateVenueStatusRequest request,
             Authentication authentication) {
-        VenueResponse response = venueService.updateVenueStatus(id, request.getStatus(), authentication.getName());
+        VenueResponse response = venueService.updateVenueStatus(
+                id,
+                request.getStatus(),
+                request.getReason(),
+                authentication.getName()
+        );
         Locale locale = LocaleContextHolder.getLocale();
         String message = messageSource.getMessage("venue.status.updated", null, locale);
         return ResponseEntity.ok(ApiResponse.success(response, message));

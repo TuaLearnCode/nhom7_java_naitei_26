@@ -1,106 +1,48 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Lịch sử thanh toán</title>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/moderator-layout :: layout('Lịch sử thanh toán', 'payments', ~{::section})}">
+<section class="admin-payments-page">
     <link rel="stylesheet" th:href="@{/css/admin-payments.css}">
-</head>
-<body>
-<main class="page-shell">
-    <header>
-        <p class="eyebrow">ADMIN · FINANCE</p>
-        <h1>Lịch sử thanh toán</h1>
-        <p class="subtitle">Tra cứu và kiểm soát các giao dịch trên hệ thống.</p>
-    </header>
+    <header class="page-header"><p class="page-description">Tra cứu và kiểm soát các giao dịch trên hệ thống.</p></header>
 
-    <section class="filter-card">
+    <section class="payment-filter-card">
         <form method="get" th:action="@{/admin/payments}" th:object="${searchRequest}">
-            <label class="wide">
-                <span>Mã giao dịch</span>
-                <input type="search" th:field="*{keyword}" placeholder="Ví dụ: TXN-2026">
-            </label>
-            <label>
-                <span>Trạng thái</span>
-                <select th:field="*{status}">
-                    <option value="">Tất cả</option>
-                    <option value="COMPLETED">COMPLETED</option>
-                    <option value="PENDING">PENDING</option>
-                    <option value="FAILED">FAILED</option>
-                    <option value="REFUNDED">REFUNDED</option>
-                </select>
-            </label>
-            <label>
-                <span>Phương thức</span>
-                <select th:field="*{paymentMethod}">
-                    <option value="">Tất cả</option>
-                    <option value="BANK_TRANSFER">BANK TRANSFER</option>
-                    <option value="CREDIT_CARD">CREDIT CARD</option>
-                    <option value="MOMO">MOMO</option>
-                    <option value="CASH">CASH</option>
-                </select>
-            </label>
-            <label>
-                <span>Từ ngày</span>
-                <input type="date" th:field="*{fromDate}">
-            </label>
-            <label>
-                <span>Đến ngày</span>
-                <input type="date" th:field="*{toDate}">
-            </label>
-            <div class="actions">
-                <button type="submit">Lọc giao dịch</button>
-                <a th:href="@{/admin/payments}">Xóa bộ lọc</a>
-            </div>
+            <label class="wide"><span>Mã giao dịch</span><input type="search" th:field="*{keyword}" placeholder="Ví dụ: TXN-2026"></label>
+            <label><span>Trạng thái</span><select th:field="*{status}"><option value="">Tất cả</option>
+                <option value="COMPLETED">COMPLETED</option><option value="PENDING">PENDING</option>
+                <option value="FAILED">FAILED</option><option value="REFUNDED">REFUNDED</option></select></label>
+            <label><span>Phương thức</span><select th:field="*{paymentMethod}"><option value="">Tất cả</option>
+                <option value="BANK_TRANSFER">BANK TRANSFER</option><option value="CREDIT_CARD">CREDIT CARD</option>
+                <option value="MOMO">MOMO</option><option value="CASH">CASH</option></select></label>
+            <label><span>Từ ngày</span><input type="date" th:field="*{fromDate}"></label>
+            <label><span>Đến ngày</span><input type="date" th:field="*{toDate}"></label>
+            <div class="payment-filter-actions"><button type="submit">Lọc giao dịch</button><a th:href="@{/admin/payments}">Xóa bộ lọc</a></div>
         </form>
     </section>
 
-    <p class="alert" role="alert" th:if="${validationError}">Ngày bắt đầu không được sau ngày kết thúc.</p>
-    <p class="alert" role="alert" th:if="${loadError}">Không thể tải lịch sử thanh toán. Vui lòng thử lại sau.</p>
+    <p class="alert alert-error" role="alert" th:if="${validationError}">Ngày bắt đầu không được sau ngày kết thúc.</p>
+    <p class="alert alert-error" role="alert" th:if="${loadError}">Không thể tải lịch sử thanh toán. Vui lòng thử lại sau.</p>
 
-    <section class="table-card">
-        <div class="table-heading">
-            <div>
-                <h2>Giao dịch</h2>
-                <span th:text="${#numbers.formatInteger(payments.totalElements, 1, 'COMMA')} + ' kết quả'">0 kết quả</span>
-            </div>
-            <span th:if="${payments.totalPages > 0}"
-                  th:text="'Trang ' + ${payments.pageNumber + 1} + ' / ' + ${payments.totalPages}">Trang 1 / 1</span>
-        </div>
-
-        <div class="table-wrap" th:if="${!payments.content.isEmpty()}">
-            <table>
-                <thead>
-                <tr><th>ID</th><th>Mã giao dịch</th><th>Booking</th><th>Số tiền</th><th>Phương thức</th><th>Trạng thái</th><th>Thanh toán lúc</th></tr>
-                </thead>
-                <tbody>
-                <tr th:each="payment : ${payments.content}">
-                    <td th:text="${payment.id}">1</td>
-                    <td class="transaction" th:text="${payment.transactionId ?: '—'}">TXN-001</td>
-                    <td th:text="${payment.bookingId ?: '—'}">1</td>
-                    <td class="amount" th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
-                    <td th:text="${payment.paymentMethod ?: '—'}">BANK_TRANSFER</td>
-                    <td><span class="status" th:classappend="'status-' + ${#strings.toLowerCase(payment.status ?: 'unknown')}" th:text="${payment.status ?: '—'}">COMPLETED</span></td>
+    <section class="payment-table-card">
+        <div class="payment-table-heading"><div><h2>Giao dịch</h2>
+            <span th:text="${#numbers.formatInteger(payments.totalElements, 1, 'COMMA')} + ' kết quả'">0 kết quả</span></div>
+            <span th:if="${payments.totalPages > 0}" th:text="'Trang ' + ${payments.pageNumber + 1} + ' / ' + ${payments.totalPages}">Trang 1 / 1</span></div>
+        <div class="payment-table-wrap" th:if="${!payments.content.isEmpty()}">
+            <table><thead><tr><th>ID</th><th>Mã giao dịch</th><th>Booking</th><th>Số tiền</th><th>Phương thức</th><th>Trạng thái</th><th>Thanh toán lúc</th></tr></thead>
+                <tbody><tr th:each="payment : ${payments.content}">
+                    <td th:text="${payment.id}">1</td><td class="transaction" th:text="${payment.transactionId ?: '—'}">TXN-001</td>
+                    <td th:text="${payment.bookingId ?: '—'}">1</td><td class="amount" th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
+                    <td th:text="${payment.paymentMethod ?: '—'}">BANK_TRANSFER</td><td><span class="payment-status" th:classappend="' status-' + ${#strings.toLowerCase(payment.status ?: 'unknown')}" th:text="${payment.status ?: '—'}">COMPLETED</span></td>
                     <td th:text="${payment.paidAt == null ? '—' : #temporals.format(payment.paidAt, 'dd/MM/yyyy HH:mm')}">26/08/2026 10:00</td>
-                </tr>
-                </tbody>
-            </table>
+                </tr></tbody></table>
         </div>
-
-        <div class="empty-state" th:if="${payments.content.isEmpty() && loadError != true}">
-            Không tìm thấy giao dịch phù hợp với bộ lọc.
-        </div>
-
-        <nav class="pagination" th:if="${payments.totalPages > 1}" aria-label="Phân trang">
-            <a th:if="${payments.pageNumber > 0}"
-               th:href="@{/admin/payments(page=${payments.pageNumber - 1},size=${payments.pageSize},keyword=${searchRequest.keyword},status=${searchRequest.status},paymentMethod=${searchRequest.paymentMethod},fromDate=${searchRequest.fromDate},toDate=${searchRequest.toDate})}">Trang trước</a>
-            <span class="disabled" th:unless="${payments.pageNumber > 0}">Trang trước</span>
-            <span th:text="${payments.pageNumber + 1}">1</span>
-            <a th:unless="${payments.last}"
-               th:href="@{/admin/payments(page=${payments.pageNumber + 1},size=${payments.pageSize},keyword=${searchRequest.keyword},status=${searchRequest.status},paymentMethod=${searchRequest.paymentMethod},fromDate=${searchRequest.fromDate},toDate=${searchRequest.toDate})}">Trang sau</a>
+        <div class="payment-empty" th:if="${payments.content.isEmpty() && loadError != true}">Không tìm thấy giao dịch phù hợp với bộ lọc.</div>
+        <nav class="payment-pagination" th:if="${payments.totalPages > 1}" aria-label="Phân trang">
+            <a th:if="${payments.pageNumber > 0}" th:href="@{/admin/payments(page=${payments.pageNumber - 1},size=${payments.pageSize},keyword=${searchRequest.keyword},status=${searchRequest.status},paymentMethod=${searchRequest.paymentMethod},fromDate=${searchRequest.fromDate},toDate=${searchRequest.toDate})}">Trang trước</a>
+            <span class="disabled" th:unless="${payments.pageNumber > 0}">Trang trước</span><span th:text="${payments.pageNumber + 1}">1</span>
+            <a th:unless="${payments.last}" th:href="@{/admin/payments(page=${payments.pageNumber + 1},size=${payments.pageSize},keyword=${searchRequest.keyword},status=${searchRequest.status},paymentMethod=${searchRequest.paymentMethod},fromDate=${searchRequest.fromDate},toDate=${searchRequest.toDate})}">Trang sau</a>
             <span class="disabled" th:if="${payments.last}">Trang sau</span>
         </nav>
     </section>
-</main>
-</body>
+</section>
 </html>

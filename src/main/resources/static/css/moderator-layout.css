@@ -186,6 +186,14 @@ a {
     flex: 1;
 
     padding: 24px 14px;
+
+    overflow-y: auto;
+}
+
+.sidebar-admin-title {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-section-title {

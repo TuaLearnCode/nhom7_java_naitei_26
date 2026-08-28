@@ -1,55 +1,140 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Quản lý venue</title>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/moderator-layout :: layout('Quản lý Venue', 'venues', ~{::section})}">
+<section class="venue-page">
     <link rel="stylesheet" th:href="@{/css/moderator-venues.css}">
-</head>
-<body>
-<main>
-    <header class="page-header">
-        <div><h1>Quản lý venue</h1><p>Xem thông tin, duyệt venue đang chờ và khóa venue vi phạm.</p></div>
-        <span class="total" th:text="${venues.totalElements} + ' venue'">0 venue</span>
-    </header>
-    <div class="alert success" role="status" th:if="${successMessage}" th:text="${successMessage}"></div>
-    <div class="alert error" role="alert" th:if="${errorMessage}" th:text="${errorMessage}"></div>
-    <section class="card">
-        <form class="filters" method="get" th:action="@{/moderator/venues}">
-            <label for="status"><span>Trạng thái</span><select id="status" name="status">
-                <option value="">Tất cả</option>
-                <option th:each="item : ${statuses}" th:value="${item}" th:text="${item}" th:selected="${item == selectedStatus}">PENDING</option>
-            </select></label>
+
+    <div class="page-header">
+        <div><p class="page-description">Xem thông tin, duyệt venue đang chờ và khóa venue vi phạm.</p></div>
+        <span class="venue-total" th:text="${venues.totalElements} + ' venue'">0 venue</span>
+    </div>
+
+    <div id="venueFeedback" class="alert" role="status" aria-live="polite" hidden></div>
+    <div th:if="${successMessage}" class="alert alert-success" role="status" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-error" role="alert" th:text="${errorMessage}"></div>
+
+    <div class="content-card">
+        <form class="venue-filters" method="get" th:action="@{/moderator/venues}">
+            <div class="venue-filter-group">
+                <label for="status">Trạng thái</label>
+                <select id="status" name="status">
+                    <option value="">Tất cả</option>
+                    <option th:each="item : ${statuses}" th:value="${item}" th:text="${item}"
+                            th:selected="${item == selectedStatus}">PENDING</option>
+                </select>
+            </div>
             <input type="hidden" name="size" th:value="${venues.pageSize}">
-            <button class="filter-button" type="submit">Lọc danh sách</button>
+            <div class="venue-filter-action">
+                <button class="venue-filter-button" type="submit">Lọc danh sách</button>
+            </div>
         </form>
-        <div class="table-wrap" th:if="${!venues.content.isEmpty()}">
-            <table>
-                <thead><tr><th>ID</th><th>Venue</th><th>Chủ sở hữu</th><th>Địa chỉ</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-                <tbody><tr th:each="venue : ${venues.content}">
+
+        <div class="venue-table-wrap" th:if="${!venues.content.isEmpty()}">
+            <table class="venue-table">
+                <thead><tr><th>ID</th><th>Venue</th><th>Chủ sở hữu</th><th>Địa chỉ</th><th>Trạng thái</th><th>Chi tiết</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                <tr th:each="venue : ${venues.content}" th:id="'venue-row-' + ${venue.id}" th:data-venue-id="${venue.id}">
                     <td th:text="${venue.id}">1</td>
                     <td><strong th:text="${venue.name}">Innovation Hub</strong><small th:if="${venue.description}" th:text="${venue.description}">Mô tả</small></td>
                     <td><span th:text="${venue.ownerName}">Host User</span><small th:text="'ID: ' + ${venue.ownerId}">ID: 2</small></td>
                     <td><span th:text="${venue.address ?: '-'}">Địa chỉ</span><small th:if="${venue.city}" th:text="${venue.city}">Thành phố</small></td>
-                    <td><span class="badge" th:classappend="' status-' + ${#strings.toLowerCase(venue.status.name())}" th:text="${venue.status}">PENDING</span></td>
-                    <td><div class="actions">
-                        <form method="post" th:if="${venue.status.name() != 'APPROVE'}" th:action="@{/moderator/venues/{id}/status(id=${venue.id})}">
-                            <input type="hidden" name="status" value="APPROVE"><button class="approve" type="submit" title="Duyệt venue">Duyệt</button>
-                        </form>
-                        <form method="post" th:if="${venue.status.name() != 'BLOCKED'}" th:action="@{/moderator/venues/{id}/status(id=${venue.id})}">
-                            <input type="hidden" name="status" value="BLOCKED"><button class="block" type="submit" title="Khóa venue">Khóa</button>
-                        </form>
-                    </div></td>
-                </tr></tbody>
+                    <td><span class="venue-status-badge" th:id="'venue-status-' + ${venue.id}"
+                              th:classappend="' status-' + ${#strings.toLowerCase(venue.status.name())}"
+                              th:text="${venue.status}">PENDING</span></td>
+                    <td><button type="button" class="venue-detail-button" th:data-venue-id="${venue.id}">Xem chi tiết</button></td>
+                    <td>
+                        <div class="venue-actions">
+                            <button type="button" class="venue-action-button venue-action-approve"
+                                    th:data-venue-id="${venue.id}" th:hidden="${venue.status.name() == 'APPROVE'}">Duyệt</button>
+                            <button type="button" class="venue-action-button venue-action-block"
+                                    th:data-venue-id="${venue.id}" th:hidden="${venue.status.name() != 'APPROVE'}">Khóa</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
             </table>
         </div>
-        <div class="empty" th:if="${venues.content.isEmpty()}">Không có venue phù hợp với bộ lọc.</div>
-        <nav class="pagination" aria-label="Phân trang" th:if="${venues.totalPages > 1}">
-            <a th:if="${venues.pageNumber > 0}" th:href="@{/moderator/venues(page=${venues.pageNumber - 1},size=${venues.pageSize},status=${selectedStatus})}">Trang trước</a>
+
+        <div class="venue-empty" th:if="${venues.content.isEmpty()}">Không có venue phù hợp với bộ lọc.</div>
+        <nav class="venue-pagination" aria-label="Phân trang" th:if="${venues.totalPages > 1}">
+            <a th:if="${venues.pageNumber > 0}"
+               th:href="@{/moderator/venues(page=${venues.pageNumber - 1},size=${venues.pageSize},status=${selectedStatus})}">Trang trước</a>
             <span th:text="'Trang ' + ${venues.pageNumber + 1} + ' / ' + ${venues.totalPages}">Trang 1 / 1</span>
-            <a th:if="${!venues.last}" th:href="@{/moderator/venues(page=${venues.pageNumber + 1},size=${venues.pageSize},status=${selectedStatus})}">Trang sau</a>
+            <a th:if="${!venues.last}"
+               th:href="@{/moderator/venues(page=${venues.pageNumber + 1},size=${venues.pageSize},status=${selectedStatus})}">Trang sau</a>
         </nav>
-    </section>
-</main>
-</body>
+    </div>
+
+    <div id="venueDetailOverlay" class="venue-dialog-overlay" aria-hidden="true"></div>
+    <aside id="venueDetailDrawer" class="venue-detail-drawer" role="dialog" aria-modal="true"
+           aria-labelledby="venueDetailTitle" aria-hidden="true">
+        <header class="venue-detail-header">
+            <div><span class="venue-detail-label">Thông tin Venue</span><h2 id="venueDetailTitle">Chi tiết Venue</h2></div>
+            <button id="venueDetailClose" type="button" class="venue-dialog-close" aria-label="Đóng chi tiết Venue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+        </header>
+        <div id="venueDetailLoading" class="venue-detail-state"><span class="venue-spinner" aria-hidden="true"></span>Đang tải thông tin Venue...</div>
+        <div id="venueDetailError" class="venue-detail-state venue-detail-error" hidden>
+            <strong>Không thể tải chi tiết Venue</strong><span id="venueDetailErrorMessage">Vui lòng thử lại.</span>
+            <button id="venueDetailRetry" type="button">Thử lại</button>
+        </div>
+        <div id="venueDetailContent" class="venue-detail-content" hidden>
+            <section class="venue-detail-summary">
+                <div><h3 id="detailVenueName">-</h3><p id="detailVenueAddress">-</p></div>
+                <span id="detailVenueStatus" class="venue-status-badge">-</span>
+            </section>
+            <section id="detailBlockReasonSection" class="venue-detail-section venue-reason-section" hidden>
+                <div class="venue-detail-section-title"><h3>Lý do khóa</h3></div><p id="detailBlockReason">-</p>
+            </section>
+            <section class="venue-detail-section">
+                <div class="venue-detail-section-title"><h3>Thông tin chung</h3></div>
+                <div class="venue-detail-grid">
+                    <div><span>ID</span><strong id="detailVenueId">-</strong></div><div><span>Thành phố</span><strong id="detailVenueCity">-</strong></div>
+                    <div><span>Đường/phố</span><strong id="detailVenueStreet">-</strong></div><div><span>Tọa độ</span><strong id="detailVenueCoordinates">-</strong></div>
+                </div>
+                <div class="venue-detail-description"><span>Mô tả</span><p id="detailVenueDescription">-</p></div>
+            </section>
+            <section class="venue-detail-section">
+                <div class="venue-detail-section-title"><h3>Host sở hữu</h3></div>
+                <div class="venue-host-card">
+                    <div id="detailHostAvatar" class="venue-host-avatar">H</div>
+                    <div class="venue-host-info"><strong id="detailHostName">-</strong><span id="detailHostEmail">-</span><span id="detailHostPhone">-</span></div>
+                    <span id="detailHostStatus" class="venue-host-status">-</span>
+                </div>
+                <div class="venue-verification-list"><span id="detailHostIdentity">CCCD: -</span><span id="detailHostBusiness">Doanh nghiệp: -</span></div>
+            </section>
+            <section class="venue-detail-section">
+                <div class="venue-detail-section-title"><h3>Tiện ích</h3><span id="detailAmenityCount">0 tiện ích</span></div>
+                <div id="detailAmenities" class="venue-amenity-list"></div>
+            </section>
+            <section class="venue-detail-section">
+                <div class="venue-detail-section-title"><h3>Spaces</h3><span id="detailSpaceCount">0 space</span></div>
+                <div id="detailSpaces" class="venue-space-list"></div>
+            </section>
+        </div>
+    </aside>
+
+    <div id="venueBlockOverlay" class="venue-dialog-overlay venue-modal-overlay" aria-hidden="true"></div>
+    <div id="venueBlockModal" class="venue-block-modal" role="dialog" aria-modal="true"
+         aria-labelledby="venueBlockTitle" aria-hidden="true">
+        <header class="venue-block-header">
+            <div class="venue-block-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.7 2.2 18a2 2 0 0 0 1.7 3h16.2a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0Z"/></svg></div>
+            <div><h2 id="venueBlockTitle">Khóa Venue</h2><p>Venue và toàn bộ Spaces sẽ ngừng nhận booking mới.</p></div>
+        </header>
+        <form id="venueBlockForm">
+            <label for="venueBlockReason">Lý do khóa <span aria-hidden="true">*</span></label>
+            <textarea id="venueBlockReason" maxlength="500" rows="5" required placeholder="Nhập lý do vi phạm hoặc lý do cần tạm khóa..."></textarea>
+            <div class="venue-reason-meta"><span id="venueBlockError" role="alert"></span><span id="venueReasonCount">0/500</span></div>
+            <div class="venue-modal-actions">
+                <button id="venueBlockCancel" type="button" class="venue-modal-cancel">Hủy</button>
+                <button id="venueBlockSubmit" type="submit" class="venue-modal-confirm">Xác nhận khóa</button>
+            </div>
+        </form>
+    </div>
+
+    <script th:src="@{/js/management-api.js}"></script>
+    <script th:src="@{/js/moderator-venues.js}"></script>
+</section>
 </html>

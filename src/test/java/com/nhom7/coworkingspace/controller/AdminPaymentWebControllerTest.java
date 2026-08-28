@@ -71,7 +71,14 @@ class AdminPaymentWebControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/payments"))
                 .andExpect(model().attributeExists("payments", "searchRequest"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("TXN-001")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("TXN-001")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("class=\"moderator-layout\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"/admin/payments\""
+                )))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "class=\"sidebar-link  active\""
+                )));
     }
 
     @Test

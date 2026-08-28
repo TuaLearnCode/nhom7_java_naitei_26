@@ -47,11 +47,12 @@ public class ModeratorVenueWebController {
     public String updateVenueStatus(
             @PathVariable Long id,
             @RequestParam VenueStatus status,
+            @RequestParam(required = false) String reason,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
         Locale locale = LocaleContextHolder.getLocale();
         try {
-            venueService.updateVenueStatus(id, status, authentication.getName());
+            venueService.updateVenueStatus(id, status, reason, authentication.getName());
             redirectAttributes.addFlashAttribute("successMessage",
                     messageSource.getMessage("venue.status.updated", null, locale));
         } catch (AppException ex) {

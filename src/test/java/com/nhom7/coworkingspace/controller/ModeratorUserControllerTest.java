@@ -166,7 +166,7 @@ class ModeratorUserControllerTest {
         void givenModeratorLockingModerator_whenUpdateUserStatus_thenReturn403() throws Exception {
                 given(userService.updateUserStatus(eq(5L), eq(UserStatus.BLOCKED), eq("moderator@test.com")))
                                 .willThrow(new com.nhom7.coworkingspace.exception.AppException(
-                                                "user.cannot.lock.peer.moderator",
+                                                "user.cannot.modify.peer.moderator",
                                                 org.springframework.http.HttpStatus.FORBIDDEN));
 
                 mockMvc.perform(put("/api/moderator/users/5/status")
@@ -182,7 +182,7 @@ class ModeratorUserControllerTest {
         void givenAdminLockingAdmin_whenUpdateUserStatus_thenReturn403() throws Exception {
                 given(userService.updateUserStatus(eq(5L), eq(UserStatus.BLOCKED), eq("admin@test.com")))
                                 .willThrow(new com.nhom7.coworkingspace.exception.AppException(
-                                                "user.cannot.lock.peer.admin",
+                                                "user.cannot.modify.peer.admin",
                                                 org.springframework.http.HttpStatus.FORBIDDEN));
 
                 mockMvc.perform(put("/api/moderator/users/5/status")

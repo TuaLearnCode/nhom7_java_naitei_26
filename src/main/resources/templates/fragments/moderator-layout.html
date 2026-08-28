@@ -2,6 +2,7 @@
 
 <html lang="vi"
       xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:fragment="layout(pageTitle, activeMenu, content)">
 
 <head>
@@ -187,6 +188,50 @@
                 </span>
 
             </a>
+
+            <div class="sidebar-admin-navigation"
+                 sec:authorize="hasRole('ADMIN')">
+
+                <div class="sidebar-section-title sidebar-admin-title">
+                    Admin
+                </div>
+
+                <a th:href="@{/admin/statistics}"
+                   class="sidebar-link"
+                   th:classappend="${activeMenu == 'statistics'} ? ' active' : ''"
+                   th:attr="aria-current=${activeMenu == 'statistics'} ? 'page' : null">
+                    <span class="sidebar-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"/><path d="m7 16 4-5 4 3 5-7"/>
+                        </svg>
+                    </span>
+                    <span>Thống kê hệ thống</span>
+                </a>
+
+                <a th:href="@{/admin/payments}"
+                   class="sidebar-link"
+                   th:classappend="${activeMenu == 'payments'} ? ' active' : ''"
+                   th:attr="aria-current=${activeMenu == 'payments'} ? 'page' : null">
+                    <span class="sidebar-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h2"/>
+                        </svg>
+                    </span>
+                    <span>Lịch sử thanh toán</span>
+                </a>
+
+                <a th:href="@{/admin/roles}"
+                   class="sidebar-link"
+                   th:classappend="${activeMenu == 'roles'} ? ' active' : ''"
+                   th:attr="aria-current=${activeMenu == 'roles'} ? 'page' : null">
+                    <span class="sidebar-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3 4 7v5c0 5 3.4 8 8 9 4.6-1 8-4 8-9V7l-8-4Z"/><path d="M9 12h6M12 9v6"/>
+                        </svg>
+                    </span>
+                    <span>Đổi role</span>
+                </a>
+            </div>
 
         </nav>
 

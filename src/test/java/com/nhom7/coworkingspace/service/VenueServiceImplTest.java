@@ -2,6 +2,9 @@ package com.nhom7.coworkingspace.service;
 
 import com.nhom7.coworkingspace.dto.request.VenueRequest;
 import com.nhom7.coworkingspace.dto.response.PageResponse;
+import com.nhom7.coworkingspace.dto.response.AmenityResponse;
+import com.nhom7.coworkingspace.dto.response.SpaceResponse;
+import com.nhom7.coworkingspace.dto.response.VenueDetailResponse;
 import com.nhom7.coworkingspace.dto.response.VenueResponse;
 import com.nhom7.coworkingspace.entity.Amenity;
 import com.nhom7.coworkingspace.entity.Role;
@@ -9,10 +12,12 @@ import com.nhom7.coworkingspace.entity.Space;
 import com.nhom7.coworkingspace.entity.User;
 import com.nhom7.coworkingspace.entity.Venue;
 import com.nhom7.coworkingspace.enums.SpaceStatus;
+import com.nhom7.coworkingspace.enums.UserStatus;
 import com.nhom7.coworkingspace.enums.VenueStatus;
 import com.nhom7.coworkingspace.exception.AppException;
 import com.nhom7.coworkingspace.exception.VenueNotFoundException;
 import com.nhom7.coworkingspace.mapper.VenueMapper;
+import com.nhom7.coworkingspace.mapper.SpaceMapper;
 import com.nhom7.coworkingspace.repository.AmenityRepository;
 import com.nhom7.coworkingspace.repository.SpaceRepository;
 import com.nhom7.coworkingspace.repository.UserRepository;
@@ -61,13 +66,88 @@ class VenueServiceImplTest {
     @Mock
     private VenueMapper venueMapper;
 
+    @Mock
+    private SpaceMapper spaceMapper;
+
     private VenueServiceImpl venueService;
 
     private static final String HOST_EMAIL = "host@coworking.test";
 
     @BeforeEach
     void setUp() {
-        venueService = new VenueServiceImpl(venueRepository, amenityRepository, userRepository, spaceRepository, venueMapper);
+        venueService = new VenueServiceImpl(
+                venueRepository,
+                amenityRepository,
+                userRepository,
+                spaceRepository,
+                venueMapper,
+                spaceMapper
+        );
+    }
+
+    @Nested
+    @DisplayName("getVenueDetail")
+    class GetVenueDetailTests {
+
+        @Test
+        @DisplayName("Maps venue, host, amenities, spaces and current block reason")
+        void getVenueDetail_MapsCompleteResponse() {
+            User owner = hostUser(1L);
+            owner.setName("Nguyễn Văn Host");
+            owner.setPhone("0901234567");
+            owner.setStatus(UserStatus.ACTIVE);
+            owner.setIsIdentityVerified(true);
+            owner.setIsBusinessVerified(false);
+
+            Amenity wifi = Amenity.builder().id(10L).name("Wi-Fi").build();
+            Amenity airConditioner = Amenity.builder().id(11L).name("Điều hòa").build();
+            Venue venue = Venue.builder()
+                    .id(100L)
+                    .owner(owner)
+                    .name("Innovation Hub")
+                    .description("Không gian làm việc")
+                    .address("1 Đại Cồ Việt")
+                    .city("Hà Nội")
+                    .street("Đại Cồ Việt")
+                    .status(VenueStatus.BLOCKED)
+                    .blockReason("Vi phạm chính sách")
+                    .amenities(Set.of(wifi, airConditioner))
+                    .deleted(false)
+                    .build();
+            Space space = Space.builder().id(20L).venue(venue).name("Meeting Room").build();
+            SpaceResponse spaceResponse = SpaceResponse.builder().id(20L).name("Meeting Room").build();
+
+            given(venueRepository.findByIdAndDeletedFalse(100L)).willReturn(Optional.of(venue));
+            given(venueMapper.toAmenityResponse(wifi))
+                    .willReturn(AmenityResponse.builder().id(10L).name("Wi-Fi").build());
+            given(venueMapper.toAmenityResponse(airConditioner))
+                    .willReturn(AmenityResponse.builder().id(11L).name("Điều hòa").build());
+            given(spaceRepository.findByVenueId(100L)).willReturn(List.of(space));
+            given(spaceMapper.toSpaceResponse(space)).willReturn(spaceResponse);
+
+            VenueDetailResponse result = venueService.getVenueDetail(100L);
+
+            assertThat(result.getName()).isEqualTo("Innovation Hub");
+            assertThat(result.getStatus()).isEqualTo(VenueStatus.BLOCKED);
+            assertThat(result.getBlockReason()).isEqualTo("Vi phạm chính sách");
+            assertThat(result.getHost().getEmail()).isEqualTo(HOST_EMAIL);
+            assertThat(result.getHost().getPhone()).isEqualTo("0901234567");
+            assertThat(result.getHost().getIsIdentityVerified()).isTrue();
+            assertThat(result.getAmenities()).extracting(AmenityResponse::getName)
+                    .containsExactly("Wi-Fi", "Điều hòa");
+            assertThat(result.getSpaces()).extracting(SpaceResponse::getName)
+                    .containsExactly("Meeting Room");
+        }
+
+        @Test
+        @DisplayName("Missing venue returns 404")
+        void getVenueDetail_NotFound() {
+            given(venueRepository.findByIdAndDeletedFalse(999L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> venueService.getVenueDetail(999L))
+                    .isInstanceOf(VenueNotFoundException.class)
+                    .hasMessage("venue.not.found");
+        }
     }
 
     private User hostUser(Long id) {
@@ -310,7 +390,7 @@ class VenueServiceImplTest {
             given(venueRepository.save(existingVenue)).willReturn(existingVenue);
             given(venueMapper.toVenueResponse(existingVenue)).willReturn(response);
 
-            VenueResponse result = venueService.updateVenueStatus(100L, VenueStatus.APPROVE, MODERATOR_EMAIL);
+            VenueResponse result = venueService.updateVenueStatus(100L, VenueStatus.APPROVE, null, MODERATOR_EMAIL);
 
             assertThat(result.getStatus()).isEqualTo(VenueStatus.APPROVE);
             assertThat(existingVenue.getStatus()).isEqualTo(VenueStatus.APPROVE);
@@ -334,11 +414,52 @@ class VenueServiceImplTest {
             given(spaceRepository.findByVenueId(100L)).willReturn(List.of(space));
             given(venueMapper.toVenueResponse(existingVenue)).willReturn(response);
 
-            VenueResponse result = venueService.updateVenueStatus(100L, VenueStatus.BLOCKED, MODERATOR_EMAIL);
+            VenueResponse result = venueService.updateVenueStatus(
+                    100L, VenueStatus.BLOCKED, "Vi phạm chính sách", MODERATOR_EMAIL
+            );
 
             assertThat(result.getStatus()).isEqualTo(VenueStatus.BLOCKED);
+            assertThat(existingVenue.getBlockReason()).isEqualTo("Vi phạm chính sách");
             assertThat(space.getStatus()).isEqualTo(SpaceStatus.INACTIVE);
             verify(spaceRepository).saveAll(List.of(space));
+        }
+
+        @Test
+        @DisplayName("Blocking requires a non-blank reason")
+        void updateVenueStatus_ToBlocked_RequiresReason() {
+            User owner = hostUser(1L);
+            User moderator = moderatorUser(99L);
+            Venue venue = Venue.builder().id(100L).owner(owner).name("Venue").deleted(false)
+                    .status(VenueStatus.APPROVE).build();
+            given(venueRepository.findByIdAndDeletedFalse(100L)).willReturn(Optional.of(venue));
+            given(userRepository.findByEmail(MODERATOR_EMAIL)).willReturn(Optional.of(moderator));
+
+            assertThatThrownBy(() -> venueService.updateVenueStatus(
+                    100L, VenueStatus.BLOCKED, "   ", MODERATOR_EMAIL
+            ))
+                    .isInstanceOf(AppException.class)
+                    .hasMessage("venue.block.reason.required");
+
+            verify(venueRepository, never()).save(any(Venue.class));
+        }
+
+        @Test
+        @DisplayName("Approving a blocked venue clears its current block reason")
+        void updateVenueStatus_ToApprove_ClearsReason() {
+            User owner = hostUser(1L);
+            User moderator = moderatorUser(99L);
+            Venue venue = Venue.builder().id(100L).owner(owner).name("Venue").deleted(false)
+                    .status(VenueStatus.BLOCKED).blockReason("Lý do cũ").build();
+            VenueResponse response = VenueResponse.builder().id(100L).status(VenueStatus.APPROVE).build();
+            given(venueRepository.findByIdAndDeletedFalse(100L)).willReturn(Optional.of(venue));
+            given(userRepository.findByEmail(MODERATOR_EMAIL)).willReturn(Optional.of(moderator));
+            given(venueRepository.save(venue)).willReturn(venue);
+            given(venueMapper.toVenueResponse(venue)).willReturn(response);
+
+            venueService.updateVenueStatus(100L, VenueStatus.APPROVE, null, MODERATOR_EMAIL);
+
+            assertThat(venue.getStatus()).isEqualTo(VenueStatus.APPROVE);
+            assertThat(venue.getBlockReason()).isNull();
         }
 
         @Test
@@ -352,7 +473,9 @@ class VenueServiceImplTest {
             given(venueRepository.findByIdAndDeletedFalse(100L)).willReturn(Optional.of(existingVenue));
             given(userRepository.findByEmail(MODERATOR_EMAIL)).willReturn(Optional.of(moderator));
 
-            assertThatThrownBy(() -> venueService.updateVenueStatus(100L, VenueStatus.BLOCKED, MODERATOR_EMAIL))
+            assertThatThrownBy(() -> venueService.updateVenueStatus(
+                    100L, VenueStatus.BLOCKED, "Vi phạm chính sách", MODERATOR_EMAIL
+            ))
                     .isInstanceOf(AppException.class)
                     .hasMessage("venue.status.transition.invalid")
                     .extracting("status")
@@ -373,7 +496,7 @@ class VenueServiceImplTest {
             given(venueRepository.findByIdAndDeletedFalse(100L)).willReturn(Optional.of(existingVenue));
             given(userRepository.findByEmail(MODERATOR_EMAIL)).willReturn(Optional.of(moderator));
 
-            assertThatThrownBy(() -> venueService.updateVenueStatus(100L, VenueStatus.PENDING, MODERATOR_EMAIL))
+            assertThatThrownBy(() -> venueService.updateVenueStatus(100L, VenueStatus.PENDING, null, MODERATOR_EMAIL))
                     .isInstanceOf(AppException.class)
                     .hasMessage("venue.status.transition.invalid")
                     .extracting("status")
@@ -396,7 +519,7 @@ class VenueServiceImplTest {
             given(userRepository.findByEmail(MODERATOR_EMAIL)).willReturn(Optional.of(moderator));
             given(venueMapper.toVenueResponse(existingVenue)).willReturn(response);
 
-            VenueResponse result = venueService.updateVenueStatus(100L, VenueStatus.APPROVE, MODERATOR_EMAIL);
+            VenueResponse result = venueService.updateVenueStatus(100L, VenueStatus.APPROVE, null, MODERATOR_EMAIL);
 
             assertThat(result.getStatus()).isEqualTo(VenueStatus.APPROVE);
             verify(venueRepository, never()).save(any(Venue.class));
@@ -412,7 +535,7 @@ class VenueServiceImplTest {
             given(venueRepository.findByIdAndDeletedFalse(100L)).willReturn(Optional.of(existingVenue));
             given(userRepository.findByEmail(MODERATOR_EMAIL)).willReturn(Optional.of(ownerAndModerator));
 
-            assertThatThrownBy(() -> venueService.updateVenueStatus(100L, VenueStatus.APPROVE, MODERATOR_EMAIL))
+            assertThatThrownBy(() -> venueService.updateVenueStatus(100L, VenueStatus.APPROVE, null, MODERATOR_EMAIL))
                     .isInstanceOf(AppException.class)
                     .hasMessage("venue.cannot.moderate.self")
                     .extracting("status")
@@ -426,7 +549,7 @@ class VenueServiceImplTest {
         void updateVenueStatus_NotFound() {
             given(venueRepository.findByIdAndDeletedFalse(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> venueService.updateVenueStatus(999L, VenueStatus.APPROVE, MODERATOR_EMAIL))
+            assertThatThrownBy(() -> venueService.updateVenueStatus(999L, VenueStatus.APPROVE, null, MODERATOR_EMAIL))
                     .isInstanceOf(VenueNotFoundException.class)
                     .hasMessage("venue.not.found")
                     .extracting("status")

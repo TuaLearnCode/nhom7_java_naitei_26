@@ -1,7 +1,11 @@
 package com.nhom7.coworkingspace.service.impl;
 
 import com.nhom7.coworkingspace.dto.request.VenueRequest;
+import com.nhom7.coworkingspace.dto.response.AmenityResponse;
 import com.nhom7.coworkingspace.dto.response.PageResponse;
+import com.nhom7.coworkingspace.dto.response.SpaceResponse;
+import com.nhom7.coworkingspace.dto.response.VenueDetailResponse;
+import com.nhom7.coworkingspace.dto.response.VenueHostResponse;
 import com.nhom7.coworkingspace.dto.response.VenueResponse;
 import com.nhom7.coworkingspace.entity.Amenity;
 import com.nhom7.coworkingspace.entity.Space;
@@ -11,6 +15,7 @@ import com.nhom7.coworkingspace.enums.SpaceStatus;
 import com.nhom7.coworkingspace.enums.VenueStatus;
 import com.nhom7.coworkingspace.exception.AppException;
 import com.nhom7.coworkingspace.exception.VenueNotFoundException;
+import com.nhom7.coworkingspace.mapper.SpaceMapper;
 import com.nhom7.coworkingspace.mapper.VenueMapper;
 import com.nhom7.coworkingspace.repository.AmenityRepository;
 import com.nhom7.coworkingspace.repository.SpaceRepository;
@@ -41,6 +46,7 @@ public class VenueServiceImpl implements VenueService {
     private final UserRepository userRepository;
     private final SpaceRepository spaceRepository;
     private final VenueMapper venueMapper;
+    private final SpaceMapper spaceMapper;
 
     @Override
     @Transactional
@@ -93,6 +99,48 @@ public class VenueServiceImpl implements VenueService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public VenueDetailResponse getVenueDetail(Long venueId) {
+        Venue venue = getActiveVenueOrThrow(venueId);
+        User owner = venue.getOwner();
+
+        List<AmenityResponse> amenities = venue.getAmenities().stream()
+                .map(venueMapper::toAmenityResponse)
+                .sorted((left, right) -> left.getName().compareToIgnoreCase(right.getName()))
+                .toList();
+
+        List<SpaceResponse> spaces = spaceRepository.findByVenueId(venueId).stream()
+                .map(spaceMapper::toSpaceResponse)
+                .toList();
+
+        VenueHostResponse host = VenueHostResponse.builder()
+                .id(owner.getId())
+                .name(owner.getName())
+                .email(owner.getEmail())
+                .phone(owner.getPhone())
+                .status(owner.getStatus())
+                .isIdentityVerified(owner.getIsIdentityVerified())
+                .isBusinessVerified(owner.getIsBusinessVerified())
+                .build();
+
+        return VenueDetailResponse.builder()
+                .id(venue.getId())
+                .name(venue.getName())
+                .description(venue.getDescription())
+                .address(venue.getAddress())
+                .city(venue.getCity())
+                .street(venue.getStreet())
+                .latitude(venue.getLatitude())
+                .longitude(venue.getLongitude())
+                .status(venue.getStatus())
+                .blockReason(venue.getBlockReason())
+                .host(host)
+                .amenities(amenities)
+                .spaces(spaces)
+                .build();
+    }
+
+    @Override
     @Transactional
     public VenueResponse updateVenue(Long venueId, VenueRequest request, String hostEmail) {
         User host = resolveHostUser(hostEmail);
@@ -118,10 +166,17 @@ public class VenueServiceImpl implements VenueService {
     // Moderator/Admin can, through this method (see ModeratorVenueController).
     @Override
     @Transactional
-    public VenueResponse updateVenueStatus(Long venueId, VenueStatus newStatus, String moderatorEmail) {
+    public VenueResponse updateVenueStatus(
+            Long venueId,
+            VenueStatus newStatus,
+            String reason,
+            String moderatorEmail
+    ) {
         Venue venue = getActiveVenueOrThrow(venueId);
         User moderator = userRepository.findByEmail(moderatorEmail)
                 .orElseThrow(() -> new AppException("user.not.found", HttpStatus.NOT_FOUND));
+
+        String normalizedReason = normalizeBlockReason(newStatus, reason);
 
         if (venue.getOwner().getId().equals(moderator.getId())) {
             throw new AppException("venue.cannot.moderate.self", HttpStatus.FORBIDDEN);
@@ -136,6 +191,7 @@ public class VenueServiceImpl implements VenueService {
         }
 
         venue.setStatus(newStatus);
+        venue.setBlockReason(normalizedReason);
         Venue savedVenue = venueRepository.save(venue);
 
         // Blocking a venue also takes its Spaces off the booking market, same as a soft delete;
@@ -146,6 +202,23 @@ public class VenueServiceImpl implements VenueService {
         }
 
         return venueMapper.toVenueResponse(savedVenue);
+    }
+
+    private String normalizeBlockReason(VenueStatus newStatus, String reason) {
+        if (newStatus != VenueStatus.BLOCKED) {
+            return null;
+        }
+
+        if (reason == null || reason.isBlank()) {
+            throw new AppException("venue.block.reason.required", HttpStatus.BAD_REQUEST);
+        }
+
+        String normalizedReason = reason.trim();
+        if (normalizedReason.length() > 500) {
+            throw new AppException("venue.block.reason.size", HttpStatus.BAD_REQUEST);
+        }
+
+        return normalizedReason;
     }
 
     /**

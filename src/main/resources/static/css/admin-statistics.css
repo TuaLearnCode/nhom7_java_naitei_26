@@ -1,56 +1,43 @@
-:root {
-    color-scheme: light;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: #172033;
-    background: #f4f7fb;
-}
-
-* { box-sizing: border-box; }
-body { margin: 0; background: #f4f7fb; }
-.dashboard { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 40px 0 64px; }
-.page-header, .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
-.eyebrow { margin: 0 0 8px; color: #4f46e5; font-size: .75rem; font-weight: 800; letter-spacing: .14em; }
-h1, h2, p { margin-top: 0; }
-h1 { margin-bottom: 8px; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.04em; }
-h2 { margin-bottom: 0; }
-.subtitle, .section-heading span { color: #64748b; }
-.year-filter { min-width: 270px; }
-.year-filter label { display: block; margin-bottom: 8px; font-size: .8rem; font-weight: 700; color: #475569; }
-.year-filter div { display: flex; gap: 8px; }
-input, button { min-height: 44px; border-radius: 10px; font: inherit; }
-input { width: 110px; border: 1px solid #cbd5e1; padding: 0 12px; background: white; }
-button { border: 0; padding: 0 18px; color: white; background: #4f46e5; font-weight: 750; cursor: pointer; }
-button:hover { background: #4338ca; }
-.alert { margin-top: 24px; padding: 16px 18px; border: 1px solid #fecaca; border-radius: 12px; color: #991b1b; background: #fef2f2; }
-.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 32px; }
-.metric-card, .chart-card { border: 1px solid #e2e8f0; border-radius: 18px; background: white; box-shadow: 0 12px 32px rgba(15, 23, 42, .06); }
-.metric-card { position: relative; overflow: hidden; padding: 22px; }
-.metric-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: #4f46e5; }
-.metric-card.bookings::before { background: #0ea5e9; }
-.metric-card.venues::before { background: #10b981; }
-.metric-card.revenue::before { background: #f59e0b; }
-.metric-card span, .metric-card small { display: block; color: #64748b; }
-.metric-card span { font-weight: 700; }
-.metric-card strong { display: block; margin: 14px 0 8px; font-size: clamp(1.7rem, 3vw, 2.25rem); letter-spacing: -.04em; }
-.chart-card { margin-top: 20px; padding: 26px; }
-.bar-chart { display: grid; gap: 13px; margin-top: 28px; }
-.bar-row { display: grid; grid-template-columns: 36px minmax(100px, 1fr) 130px; align-items: center; gap: 14px; }
-.month { font-weight: 800; color: #475569; }
-.bar-track { height: 18px; overflow: hidden; border-radius: 999px; background: #eef2ff; }
-.bar-fill { min-width: 2px; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4f46e5, #818cf8); }
-.bar-row strong { text-align: right; font-size: .875rem; }
-.empty-state { margin: 26px 0 0; padding: 38px; border: 1px dashed #cbd5e1; border-radius: 14px; text-align: center; color: #64748b; background: #f8fafc; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-
-@media (max-width: 900px) {
-    .metric-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
+.admin-statistics-page .statistics-header { align-items: flex-end; }
+.admin-statistics-page .year-filter { min-width: 270px; }
+.admin-statistics-page .year-filter label { display: block; margin-bottom: 7px; color: #475569; font-size: 12px; font-weight: 700; }
+.admin-statistics-page .year-filter div { display: flex; gap: 8px; }
+.admin-statistics-page .year-filter input,
+.admin-statistics-page .year-filter button { min-height: 42px; border-radius: 9px; }
+.admin-statistics-page .year-filter input { width: 110px; padding: 0 11px; border: 1px solid #cbd5e1; background: #fff; }
+.admin-statistics-page .year-filter button { padding: 0 16px; border: 0; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; }
+.admin-statistics-page .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.admin-statistics-page .metric-card,
+.admin-statistics-page .chart-card { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; box-shadow: 0 10px 30px rgba(15, 23, 42, .07); }
+.admin-statistics-page .metric-card { position: relative; overflow: hidden; padding: 21px; }
+.admin-statistics-page .metric-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: #4f46e5; }
+.admin-statistics-page .metric-card.bookings::before { background: #0ea5e9; }
+.admin-statistics-page .metric-card.venues::before { background: #10b981; }
+.admin-statistics-page .metric-card.revenue::before { background: #f59e0b; }
+.admin-statistics-page .metric-card span,
+.admin-statistics-page .metric-card small { display: block; color: #64748b; }
+.admin-statistics-page .metric-card span { font-size: 13px; font-weight: 700; }
+.admin-statistics-page .metric-card strong { display: block; margin: 13px 0 7px; color: #0f172a; font-size: clamp(1.55rem, 3vw, 2rem); }
+.admin-statistics-page .metric-card small { font-size: 11px; }
+.admin-statistics-page .chart-card { margin-top: 20px; padding: 24px; }
+.admin-statistics-page .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.admin-statistics-page .section-heading div > span { display: block; margin-bottom: 5px; color: #2563eb; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.admin-statistics-page .section-heading h2 { margin: 0; color: #0f172a; font-size: 18px; }
+.admin-statistics-page .section-heading > span { color: #64748b; font-size: 12px; }
+.admin-statistics-page .bar-chart { display: grid; gap: 13px; margin-top: 25px; }
+.admin-statistics-page .bar-row { display: grid; grid-template-columns: 36px minmax(100px, 1fr) 130px; align-items: center; gap: 14px; }
+.admin-statistics-page .month { color: #475569; font-size: 12px; font-weight: 800; }
+.admin-statistics-page .bar-track { height: 17px; overflow: hidden; border-radius: 999px; background: #eef2ff; }
+.admin-statistics-page .bar-fill { min-width: 2px; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4f46e5, #818cf8); }
+.admin-statistics-page .bar-row strong { color: #334155; font-size: 12px; text-align: right; }
+.admin-statistics-page .statistics-empty { margin: 24px 0 0; padding: 34px; border: 1px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; color: #64748b; text-align: center; }
+.admin-statistics-page .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (max-width: 1050px) { .admin-statistics-page .metric-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 620px) {
-    .dashboard { width: min(100% - 20px, 1180px); padding-top: 24px; }
-    .page-header { align-items: stretch; flex-direction: column; }
-    .year-filter { min-width: 0; }
-    .metric-grid { grid-template-columns: 1fr; }
-    .bar-row { grid-template-columns: 32px minmax(70px, 1fr) 90px; gap: 8px; }
-    .chart-card { padding: 18px; }
+    .admin-statistics-page .statistics-header { align-items: stretch; flex-direction: column; }
+    .admin-statistics-page .year-filter { min-width: 0; width: 100%; }
+    .admin-statistics-page .year-filter div { display: grid; grid-template-columns: 110px 1fr; }
+    .admin-statistics-page .metric-grid { grid-template-columns: 1fr; }
+    .admin-statistics-page .bar-row { grid-template-columns: 30px minmax(70px, 1fr) 86px; gap: 8px; }
+    .admin-statistics-page .chart-card { padding: 17px; }
 }

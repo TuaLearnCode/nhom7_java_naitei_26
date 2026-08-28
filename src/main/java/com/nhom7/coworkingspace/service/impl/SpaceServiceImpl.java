@@ -52,15 +52,12 @@ public class SpaceServiceImpl implements SpaceService {
         log.debug("[SpaceService] Searching spaces with params: name={}, city={}, type={}, priceUnit={}",
                 request.getName(), request.getCity(), request.getType(), request.getPriceUnit());
 
-        Sort.Direction direction = "DESC".equalsIgnoreCase(request.getSortDir())
-                ? Sort.Direction.DESC
-                : Sort.Direction.ASC;
+        validateSearchRequest(request);
 
-        String rawSortBy = (request.getSortBy() != null) ? request.getSortBy().trim() : "id";
-        String sortBy = ALLOWED_SORT_FIELDS.contains(rawSortBy) ? rawSortBy : "id";
-
-        int page = Math.max(0, request.getPage());
-        int size = Math.min(Math.max(1, request.getSize()), 100);
+        Sort.Direction direction = Sort.Direction.fromString(request.getSortDir());
+        String sortBy = request.getSortBy().trim();
+        int page = request.getPage();
+        int size = request.getSize();
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
@@ -90,7 +87,7 @@ public class SpaceServiceImpl implements SpaceService {
             throw new AppException("booking.operating.hours.invalid", HttpStatus.BAD_REQUEST);
         }
 
-        PriceUnit priceUnit = PriceUnit.fromString(request.getPriceUnit());
+        PriceUnit priceUnit = parsePriceUnit(request.getPriceUnit());
 
         Space space = Space.builder()
                 .venue(venue)
@@ -114,9 +111,8 @@ public class SpaceServiceImpl implements SpaceService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<SpaceResponse> getMySpaces(String hostEmail, int page, int size) {
-        int sanitizedPage = Math.max(0, page);
-        int sanitizedSize = Math.min(Math.max(1, size), 100);
-        Pageable pageable = PageRequest.of(sanitizedPage, sanitizedSize, Sort.by(Sort.Direction.DESC, "id"));
+        validatePageRequest(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
         Page<Space> spacePage = spaceRepository.findMySpaces(hostEmail, pageable);
         Page<SpaceResponse> dtoPage = spacePage.map(spaceMapper::toSpaceResponse);
@@ -129,9 +125,8 @@ public class SpaceServiceImpl implements SpaceService {
         venueRepository.findByIdAndDeletedFalse(venueId)
                 .orElseThrow(() -> new AppException("venue.not.found", HttpStatus.NOT_FOUND));
 
-        int sanitizedPage = Math.max(0, page);
-        int sanitizedSize = Math.min(Math.max(1, size), 100);
-        Pageable pageable = PageRequest.of(sanitizedPage, sanitizedSize, Sort.by(Sort.Direction.ASC, "id"));
+        validatePageRequest(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"));
 
         Page<Space> spacePage = spaceRepository.findByVenueIdAndVenueDeletedFalse(venueId, pageable);
         Page<SpaceResponse> dtoPage = spacePage.map(spaceMapper::toSpaceResponse);
@@ -151,7 +146,7 @@ public class SpaceServiceImpl implements SpaceService {
             throw new AppException("booking.operating.hours.invalid", HttpStatus.BAD_REQUEST);
         }
 
-        PriceUnit priceUnit = PriceUnit.fromString(request.getPriceUnit());
+        PriceUnit priceUnit = parsePriceUnit(request.getPriceUnit());
 
         space.setName(request.getName());
         space.setType(request.getType() != null ? request.getType().trim() : space.getType());
@@ -180,6 +175,12 @@ public class SpaceServiceImpl implements SpaceService {
 
         User manager = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new AppException("user.not.found", HttpStatus.NOT_FOUND));
+
+        boolean isHost = manager.getRoles() != null && manager.getRoles().stream()
+                .anyMatch(role -> "HOST".equalsIgnoreCase(role.getName()));
+        if (!isHost) {
+            throw new AppException("space.manager.host.required", HttpStatus.BAD_REQUEST);
+        }
 
         space.getHosts().add(manager);
         Space updatedSpace = spaceRepository.save(space);
@@ -211,6 +212,68 @@ public class SpaceServiceImpl implements SpaceService {
 
         if (!isOwner && !isManager) {
             throw new AppException("common.forbidden", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    private void validateSearchRequest(SpaceSearchRequest request) {
+        validatePageRequest(request.getPage(), request.getSize());
+
+        if (request.getSortBy() == null || !ALLOWED_SORT_FIELDS.contains(request.getSortBy().trim())) {
+            throw new AppException("validation.space.sortBy.invalid", HttpStatus.BAD_REQUEST);
+        }
+        if (request.getSortDir() == null
+                || !("ASC".equalsIgnoreCase(request.getSortDir())
+                || "DESC".equalsIgnoreCase(request.getSortDir()))) {
+            throw new AppException("validation.sortDir.invalid", HttpStatus.BAD_REQUEST);
+        }
+        if (request.getMinPrice() != null && request.getMinPrice().signum() < 0
+                || request.getMaxPrice() != null && request.getMaxPrice().signum() < 0) {
+            throw new AppException("validation.space.searchPrice.min", HttpStatus.BAD_REQUEST);
+        }
+        if (request.getMinPrice() != null && request.getMaxPrice() != null
+                && request.getMinPrice().compareTo(request.getMaxPrice()) > 0) {
+            throw new AppException("validation.space.priceRange.invalid", HttpStatus.BAD_REQUEST);
+        }
+        if (request.getOpenTime() != null && request.getCloseTime() != null
+                && !request.getOpenTime().isBefore(request.getCloseTime())) {
+            throw new AppException("validation.space.operatingHours.invalid", HttpStatus.BAD_REQUEST);
+        }
+
+        boolean hasBookingStart = request.getBookingStart() != null;
+        boolean hasBookingEnd = request.getBookingEnd() != null;
+        if (hasBookingStart != hasBookingEnd) {
+            throw new AppException(
+                    hasBookingStart ? "validation.space.bookingEnd.required" : "validation.space.bookingStart.required",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+        if (hasBookingStart && !request.getBookingStart().isBefore(request.getBookingEnd())) {
+            throw new AppException("validation.space.bookingRange.invalid", HttpStatus.BAD_REQUEST);
+        }
+
+        if (request.getPriceUnit() != null && !request.getPriceUnit().isBlank()) {
+            PriceUnit unit = parsePriceUnit(request.getPriceUnit());
+            request.setPriceUnit(unit.name().toLowerCase(Locale.ROOT));
+        }
+    }
+
+    private void validatePageRequest(int page, int size) {
+        if (page < 0) {
+            throw new AppException("validation.page.min", HttpStatus.BAD_REQUEST);
+        }
+        if (size < 1) {
+            throw new AppException("validation.size.min", HttpStatus.BAD_REQUEST);
+        }
+        if (size > 100) {
+            throw new AppException("validation.size.max", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private PriceUnit parsePriceUnit(String value) {
+        try {
+            return PriceUnit.fromStringStrict(value);
+        } catch (IllegalArgumentException ex) {
+            throw new AppException("validation.space.priceUnit.invalid", HttpStatus.BAD_REQUEST);
         }
     }
 }

@@ -9,16 +9,22 @@ import com.nhom7.coworkingspace.dto.response.PageResponse;
 import com.nhom7.coworkingspace.dto.response.SpaceResponse;
 import com.nhom7.coworkingspace.service.SpaceService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Locale;
@@ -26,6 +32,7 @@ import java.util.Locale;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Space API", description = "Endpoints for Co-working Space search and management")
 @SecurityRequirement(name = "BearerAuth")
 public class SpaceController {
@@ -40,7 +47,7 @@ public class SpaceController {
     @PreAuthorize("hasAnyRole('USER', 'HOST', 'MODERATOR', 'ADMIN')")
     @Operation(summary = "Search & Filter Co-working spaces", description = "Allows users to search and filter co-working spaces by name, address, type, price, and availability time.")
     public ResponseEntity<ApiResponse<PageResponse<SpaceResponse>>> searchSpaces(
-            @ModelAttribute SpaceSearchRequest request) {
+            @ParameterObject @Valid @ModelAttribute SpaceSearchRequest request) {
         PageResponse<SpaceResponse> result = spaceService.searchSpaces(request);
         String message = resolveMessage("space.list.fetched");
         return ResponseEntity.ok(ApiResponse.success(result, message));
@@ -53,7 +60,7 @@ public class SpaceController {
     @PreAuthorize("hasRole('HOST')")
     @Operation(summary = "Create Space in Venue", description = "Allows an authenticated HOST to add a new space to their venue.")
     public ResponseEntity<ApiResponse<SpaceResponse>> createSpace(
-            @PathVariable Long venueId,
+            @Parameter(example = "13") @Positive(message = "{validation.id.positive}") @PathVariable Long venueId,
             @Valid @RequestBody SpaceCreateRequest request,
             Authentication authentication
     ) {
@@ -70,7 +77,10 @@ public class SpaceController {
     @PreAuthorize("hasRole('HOST')")
     @Operation(summary = "List My Spaces", description = "Allows an authenticated HOST to retrieve paginated list of their spaces.")
     public ResponseEntity<ApiResponse<PageResponse<SpaceResponse>>> getMySpaces(
+            @Min(value = 0, message = "{validation.page.min}")
             @RequestParam(defaultValue = "0") int page,
+            @Min(value = 1, message = "{validation.size.min}")
+            @Max(value = 100, message = "{validation.size.max}")
             @RequestParam(defaultValue = "10") int size,
             Authentication authentication
     ) {
@@ -86,8 +96,11 @@ public class SpaceController {
     @PreAuthorize("hasAnyRole('USER', 'HOST', 'MODERATOR', 'ADMIN')")
     @Operation(summary = "List Spaces in Venue", description = "Retrieve paginated list of spaces inside a specific venue.")
     public ResponseEntity<ApiResponse<PageResponse<SpaceResponse>>> getSpacesByVenue(
-            @PathVariable Long venueId,
+            @Positive(message = "{validation.id.positive}") @PathVariable Long venueId,
+            @Min(value = 0, message = "{validation.page.min}")
             @RequestParam(defaultValue = "0") int page,
+            @Min(value = 1, message = "{validation.size.min}")
+            @Max(value = 100, message = "{validation.size.max}")
             @RequestParam(defaultValue = "10") int size
     ) {
         PageResponse<SpaceResponse> response = spaceService.getSpacesByVenue(venueId, page, size);
@@ -102,7 +115,7 @@ public class SpaceController {
     @PreAuthorize("hasRole('HOST')")
     @Operation(summary = "Update Space", description = "Allows an authenticated HOST to update details of their space.")
     public ResponseEntity<ApiResponse<SpaceResponse>> updateSpace(
-            @PathVariable Long id,
+            @Positive(message = "{validation.id.positive}") @PathVariable Long id,
             @Valid @RequestBody SpaceUpdateRequest request,
             Authentication authentication
     ) {
@@ -118,7 +131,7 @@ public class SpaceController {
     @PreAuthorize("hasRole('HOST')")
     @Operation(summary = "Delete Space", description = "Allows an authenticated HOST to delete their space.")
     public ResponseEntity<ApiResponse<Void>> deleteSpace(
-            @PathVariable Long id,
+            @Positive(message = "{validation.id.positive}") @PathVariable Long id,
             Authentication authentication
     ) {
         spaceService.deleteSpace(id, authentication.getName());
@@ -133,7 +146,7 @@ public class SpaceController {
     @PreAuthorize("hasRole('HOST')")
     @Operation(summary = "Add Manager to Space", description = "Allows an authenticated HOST to assign a manager (user) to a space.")
     public ResponseEntity<ApiResponse<SpaceResponse>> addManagerToSpace(
-            @PathVariable Long id,
+            @Positive(message = "{validation.id.positive}") @PathVariable Long id,
             @Valid @RequestBody AddSpaceManagerRequest request,
             Authentication authentication
     ) {

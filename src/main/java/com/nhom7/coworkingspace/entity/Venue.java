@@ -50,6 +50,9 @@ public class Venue {
     @Column(name = "status", length = 30)
     private VenueStatus status;
 
+    @Column(name = "block_reason", length = 500)
+    private String blockReason;
+
     @Column(name = "deleted", nullable = false)
     @Builder.Default
     private Boolean deleted = false;

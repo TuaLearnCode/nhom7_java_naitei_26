@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/moderator-layout :: layout('Đổi role người dùng', 'roles', ~{::section})}">
+<section class="admin-role-page">
+    <link rel="stylesheet" th:href="@{/css/admin-roles.css}">
+
+    <div class="page-header">
+        <div><p class="page-description">Tra cứu tài khoản và quản lý vai trò truy cập trên hệ thống.</p></div>
+    </div>
+
+    <div id="roleFeedback" class="alert" role="status" aria-live="polite" hidden></div>
+
+    <div class="content-card">
+        <form id="roleFilterForm" class="role-filter-form">
+            <div class="role-filter-group role-filter-search">
+                <label for="roleKeyword">Tìm kiếm</label>
+                <input id="roleKeyword" type="search" placeholder="Tên, email hoặc số điện thoại">
+            </div>
+            <div class="role-filter-group">
+                <label for="roleStatus">Trạng thái</label>
+                <select id="roleStatus">
+                    <option value="">Tất cả</option><option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option><option value="BLOCKED">BLOCKED</option>
+                </select>
+            </div>
+            <div class="role-filter-group">
+                <label for="roleCurrent">Vai trò hiện tại</label>
+                <select id="roleCurrent">
+                    <option value="">Tất cả</option><option value="USER">USER</option><option value="HOST">HOST</option>
+                    <option value="MODERATOR">MODERATOR</option><option value="ADMIN">ADMIN</option>
+                </select>
+            </div>
+            <button id="roleFilterSubmit" class="role-primary-button" type="submit">Tìm kiếm</button>
+        </form>
+
+        <div id="roleLoading" class="role-page-state"><span class="role-spinner" aria-hidden="true"></span>Đang tải người dùng...</div>
+        <div id="roleError" class="role-page-state role-page-error" hidden>
+            <strong>Không thể tải danh sách người dùng</strong><span id="roleErrorMessage">Vui lòng thử lại.</span>
+            <button id="roleRetry" type="button">Thử lại</button>
+        </div>
+        <div id="roleEmpty" class="role-page-state" hidden>Không tìm thấy tài khoản phù hợp.</div>
+
+        <div id="roleTableWrap" class="role-table-wrap" hidden>
+            <table class="role-table">
+                <thead><tr><th>Người dùng</th><th>Trạng thái</th><th>Role hiện tại</th><th>Đổi role</th><th>Gỡ role</th></tr></thead>
+                <tbody id="roleTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="rolePagination" class="role-pagination" hidden>
+            <button id="rolePrevious" type="button">Trang trước</button>
+            <span id="rolePageInfo">Trang 1 / 1</span>
+            <button id="roleNext" type="button">Trang sau</button>
+        </div>
+    </div>
+
+    <script th:src="@{/js/management-api.js}"></script>
+    <script th:src="@{/js/admin-roles.js}"></script>
+</section>
+</html>

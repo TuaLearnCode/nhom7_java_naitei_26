@@ -122,6 +122,7 @@ public class SecurityConfig {
                                 SessionCreationPolicy.IF_REQUIRED
                         )
                 )
+
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers(
@@ -158,17 +159,39 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated()
                 )
+
                 .formLogin(login -> login
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/moderator/venues", true)
+                        .defaultSuccessUrl(
+                                "/moderator/users",
+                                true
+                        )
                         .failureUrl("/login?error")
-                        .permitAll())
+                        .permitAll()
+                )
+
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID"));
+                        .deleteCookies("JSESSIONID")
+                )
+
+                /*
+                 * QUAN TRỌNG:
+                 *
+                 * Web Management dùng JWT nằm trong
+                 * moderator_access_token cookie.
+                 *
+                 * Nếu web chain không chạy JwtAuthenticationFilter,
+                 * request /moderator/** sẽ luôn bị coi là anonymous
+                 * và bị redirect ngược về /login.
+                 */
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }

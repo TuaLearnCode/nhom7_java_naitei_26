@@ -143,6 +143,81 @@ class ModeratorUserWebControllerTest {
 
     @Test
     @WithMockUser(
+            username = "moderator@test.com",
+            roles = {"MODERATOR"}
+    )
+    @DisplayName(
+            "MODERATOR -> own account row is marked as self for drawer permissions"
+    )
+    void givenCurrentModeratorInList_whenListUsers_thenMarkOwnAccountAsSelf()
+            throws Exception {
+
+        UserSearchResponse currentUser =
+                UserSearchResponse.builder()
+                        .id(5L)
+                        .name("Current Moderator")
+                        .email("moderator@test.com")
+                        .status(UserStatus.ACTIVE)
+                        .roles(Set.of("MODERATOR"))
+                        .build();
+
+        UserSearchResponse otherUser =
+                UserSearchResponse.builder()
+                        .id(6L)
+                        .name("Other User")
+                        .email("user@test.com")
+                        .status(UserStatus.ACTIVE)
+                        .roles(Set.of("USER"))
+                        .build();
+
+        PageResponse<UserSearchResponse> pageResponse =
+                PageResponse.<UserSearchResponse>builder()
+                        .content(List.of(currentUser, otherUser))
+                        .pageNumber(0)
+                        .pageSize(20)
+                        .totalElements(2)
+                        .totalPages(1)
+                        .last(true)
+                        .build();
+
+        given(
+                userService.searchUsers(
+                        any(UserSearchRequest.class),
+                        eq("moderator@test.com")
+                )
+        ).willReturn(pageResponse);
+
+        mockMvc.perform(
+                        get("/moderator/users")
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        model().attribute(
+                                "currentUserEmail",
+                                "moderator@test.com"
+                        )
+                )
+                .andExpect(
+                        content().string(
+                                containsString(
+                                        "data-is-self=\"true\""
+                                )
+                        )
+                )
+                .andExpect(
+                        content().string(
+                                containsString(
+                                        "data-is-self=\"false\""
+                                )
+                        )
+                );
+    }
+
+
+    @Test
+    @WithMockUser(
             username = "admin@test.com",
             roles = {"ADMIN"}
     )

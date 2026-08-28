@@ -3,6 +3,7 @@ package com.nhom7.coworkingspace.controller;
 import com.nhom7.coworkingspace.config.JwtProperties;
 import com.nhom7.coworkingspace.controller.api.ModeratorVenueController;
 import com.nhom7.coworkingspace.dto.response.PageResponse;
+import com.nhom7.coworkingspace.dto.response.VenueDetailResponse;
 import com.nhom7.coworkingspace.dto.response.VenueResponse;
 import com.nhom7.coworkingspace.enums.VenueStatus;
 import com.nhom7.coworkingspace.exception.AppException;
@@ -74,11 +75,53 @@ class ModeratorVenueControllerTest {
 
     @Test
     @WithMockUser(username = "moderator@test.com", roles = {"MODERATOR"})
+    @DisplayName("Authenticated MODERATOR can view venue detail")
+    void givenModeratorRole_whenGetVenueDetail_thenReturn200() throws Exception {
+        VenueDetailResponse detail = VenueDetailResponse.builder()
+                .id(1L).name("Innovation Hub").status(VenueStatus.APPROVE).build();
+        given(venueService.getVenueDetail(1L)).willReturn(detail);
+
+        mockMvc.perform(get("/api/moderator/venues/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.name").value("Innovation Hub"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
+    @DisplayName("Authenticated ADMIN can view venue detail")
+    void givenAdminRole_whenGetVenueDetail_thenReturn200() throws Exception {
+        given(venueService.getVenueDetail(1L))
+                .willReturn(VenueDetailResponse.builder().id(1L).name("Venue").build());
+
+        mockMvc.perform(get("/api/moderator/venues/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "user@test.com", roles = {"USER"})
+    @DisplayName("USER cannot view moderator venue detail")
+    void givenUserRole_whenGetVenueDetail_thenReturn403() throws Exception {
+        mockMvc.perform(get("/api/moderator/venues/1"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(venueService);
+    }
+
+    @Test
+    @DisplayName("Anonymous cannot view moderator venue detail")
+    void givenAnonymous_whenGetVenueDetail_thenReturn401() throws Exception {
+        mockMvc.perform(get("/api/moderator/venues/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = "moderator@test.com", roles = {"MODERATOR"})
     @DisplayName("Authenticated MODERATOR -> PUT /api/moderator/venues/{id}/status returns 200 OK")
     void givenModeratorRole_whenUpdateVenueStatus_thenReturn200() throws Exception {
         VenueResponse response = VenueResponse.builder().id(1L).ownerId(10L).status(VenueStatus.APPROVE).build();
 
-        given(venueService.updateVenueStatus(eq(1L), eq(VenueStatus.APPROVE), eq("moderator@test.com")))
+        given(venueService.updateVenueStatus(eq(1L), eq(VenueStatus.APPROVE), eq(null), eq("moderator@test.com")))
                 .willReturn(response);
 
         mockMvc.perform(put("/api/moderator/venues/1/status")
@@ -96,13 +139,13 @@ class ModeratorVenueControllerTest {
     void givenAdminRole_whenUpdateVenueStatus_thenReturn200() throws Exception {
         VenueResponse response = VenueResponse.builder().id(1L).ownerId(10L).status(VenueStatus.BLOCKED).build();
 
-        given(venueService.updateVenueStatus(eq(1L), eq(VenueStatus.BLOCKED), eq("admin@test.com")))
+        given(venueService.updateVenueStatus(eq(1L), eq(VenueStatus.BLOCKED), eq("Vi phạm chính sách"), eq("admin@test.com")))
                 .willReturn(response);
 
         mockMvc.perform(put("/api/moderator/venues/1/status")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"status\": \"BLOCKED\"}"))
+                        .content("{\"status\": \"BLOCKED\", \"reason\": \"Vi phạm chính sách\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("BLOCKED"));
     }
@@ -143,6 +186,47 @@ class ModeratorVenueControllerTest {
 
     @Test
     @WithMockUser(username = "moderator@test.com", roles = {"MODERATOR"})
+    @DisplayName("Block without reason returns 400")
+    void givenBlockedWithoutReason_whenUpdateVenueStatus_thenReturn400() throws Exception {
+        mockMvc.perform(put("/api/moderator/venues/1/status")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": \"BLOCKED\"}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(venueService);
+    }
+
+    @Test
+    @WithMockUser(username = "moderator@test.com", roles = {"MODERATOR"})
+    @DisplayName("Block with a blank reason returns 400")
+    void givenBlockedWithBlankReason_whenUpdateVenueStatus_thenReturn400() throws Exception {
+        mockMvc.perform(put("/api/moderator/venues/1/status")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": \"BLOCKED\", \"reason\": \"   \"}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(venueService);
+    }
+
+    @Test
+    @WithMockUser(username = "moderator@test.com", roles = {"MODERATOR"})
+    @DisplayName("Block reason longer than 500 characters returns 400")
+    void givenBlockedWithLongReason_whenUpdateVenueStatus_thenReturn400() throws Exception {
+        String longReason = "a".repeat(501);
+
+        mockMvc.perform(put("/api/moderator/venues/1/status")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\": \"BLOCKED\", \"reason\": \"" + longReason + "\"}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(venueService);
+    }
+
+    @Test
+    @WithMockUser(username = "moderator@test.com", roles = {"MODERATOR"})
     @DisplayName("Unknown status returns 400 with the list of accepted values")
     void givenUnknownStatus_whenUpdateVenueStatus_thenReturnHelpfulBadRequest() throws Exception {
         mockMvc.perform(put("/api/moderator/venues/1/status")
@@ -160,7 +244,7 @@ class ModeratorVenueControllerTest {
     @WithMockUser(username = "moderator@test.com", roles = {"MODERATOR"})
     @DisplayName("Moderator moderating their own venue -> 403 with venue.cannot.moderate.self message")
     void givenModeratorOwnsVenue_whenUpdateVenueStatus_thenReturn403() throws Exception {
-        given(venueService.updateVenueStatus(eq(1L), eq(VenueStatus.APPROVE), eq("moderator@test.com")))
+        given(venueService.updateVenueStatus(eq(1L), eq(VenueStatus.APPROVE), eq(null), eq("moderator@test.com")))
                 .willThrow(new AppException("venue.cannot.moderate.self", HttpStatus.FORBIDDEN));
 
         mockMvc.perform(put("/api/moderator/venues/1/status")

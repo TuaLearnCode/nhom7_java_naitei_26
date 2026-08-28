@@ -1,53 +1,52 @@
-:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: #f4f7fb; }
-* { box-sizing: border-box; }
-body { margin: 0; background: #f4f7fb; }
-.page-shell { width: min(1240px, calc(100% - 32px)); margin: auto; padding: 40px 0 64px; }
-.eyebrow { margin: 0 0 8px; color: #0f766e; font-size: .75rem; font-weight: 800; letter-spacing: .14em; }
-h1, h2, p { margin-top: 0; }
-h1 { margin-bottom: 8px; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.04em; }
-.subtitle, .table-heading span { color: #64748b; }
-.filter-card, .table-card { border: 1px solid #e2e8f0; border-radius: 18px; background: white; box-shadow: 0 12px 32px rgba(15, 23, 42, .06); }
-.filter-card { margin-top: 28px; padding: 20px; }
-.filter-card form { display: grid; grid-template-columns: 1.5fr repeat(4, 1fr) auto; align-items: end; gap: 12px; }
-label span { display: block; margin-bottom: 7px; color: #475569; font-size: .78rem; font-weight: 750; }
-input, select, button, .actions a { min-height: 42px; border-radius: 10px; font: inherit; }
-input, select { width: 100%; border: 1px solid #cbd5e1; padding: 0 11px; background: white; }
-.actions { display: flex; gap: 8px; }
-button, .actions a { display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 0 15px; white-space: nowrap; text-decoration: none; font-weight: 750; }
-button { color: white; background: #0f766e; cursor: pointer; }
-.actions a { color: #475569; background: #f1f5f9; }
-.alert { margin: 16px 0 0; padding: 14px 16px; border: 1px solid #fecaca; border-radius: 10px; color: #991b1b; background: #fef2f2; }
-.table-card { margin-top: 20px; overflow: hidden; }
-.table-heading { display: flex; align-items: center; justify-content: space-between; padding: 22px 24px; border-bottom: 1px solid #e2e8f0; }
-.table-heading h2 { margin-bottom: 4px; }
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 15px 16px; border-bottom: 1px solid #edf2f7; text-align: left; white-space: nowrap; }
-th { color: #64748b; background: #f8fafc; font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; }
-td { font-size: .88rem; }
-.transaction { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
-.amount { font-weight: 800; }
-.status { display: inline-flex; padding: 5px 9px; border-radius: 999px; color: #475569; background: #e2e8f0; font-size: .72rem; font-weight: 850; }
-.status-completed { color: #047857; background: #d1fae5; }
-.status-pending { color: #a16207; background: #fef3c7; }
-.status-failed { color: #b91c1c; background: #fee2e2; }
-.status-refunded { color: #6d28d9; background: #ede9fe; }
-.empty-state { padding: 56px 20px; text-align: center; color: #64748b; }
-.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px; }
-.pagination a, .pagination span { display: inline-flex; min-width: 40px; min-height: 38px; align-items: center; justify-content: center; border-radius: 9px; padding: 0 13px; text-decoration: none; }
-.pagination a { padding: 0 13px; color: #0f766e; background: #ecfdf5; font-weight: 750; }
-.pagination span { color: white; background: #0f766e; }
-.pagination .disabled { color: #64748b; background: #e2e8f0; opacity: .65; }
-
-@media (max-width: 1050px) {
-    .filter-card form { grid-template-columns: repeat(2, 1fr); }
-    .wide, .actions { grid-column: span 2; }
+.admin-payments-page .payment-filter-card,
+.admin-payments-page .payment-table-card { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; box-shadow: 0 10px 30px rgba(15, 23, 42, .07); }
+.admin-payments-page .payment-filter-card { padding: 20px; }
+.admin-payments-page .payment-filter-card form { display: grid; grid-template-columns: 1.5fr repeat(4, 1fr) auto; align-items: end; gap: 12px; }
+.admin-payments-page .payment-filter-card label span { display: block; margin-bottom: 7px; color: #475569; font-size: 12px; font-weight: 700; }
+.admin-payments-page .payment-filter-card input,
+.admin-payments-page .payment-filter-card select,
+.admin-payments-page .payment-filter-actions button,
+.admin-payments-page .payment-filter-actions a { min-height: 42px; border-radius: 9px; }
+.admin-payments-page .payment-filter-card input,
+.admin-payments-page .payment-filter-card select { width: 100%; padding: 0 11px; border: 1px solid #cbd5e1; background: #fff; }
+.admin-payments-page .payment-filter-actions { display: flex; gap: 8px; }
+.admin-payments-page .payment-filter-actions button,
+.admin-payments-page .payment-filter-actions a { display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 0; white-space: nowrap; text-decoration: none; font-size: 12px; font-weight: 700; }
+.admin-payments-page .payment-filter-actions button { background: #2563eb; color: #fff; cursor: pointer; }
+.admin-payments-page .payment-filter-actions a { background: #f1f5f9; color: #475569; }
+.admin-payments-page .payment-table-card { margin-top: 20px; overflow: hidden; }
+.admin-payments-page .payment-table-heading { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px; border-bottom: 1px solid #e2e8f0; }
+.admin-payments-page .payment-table-heading h2 { margin: 0 0 4px; color: #0f172a; font-size: 17px; }
+.admin-payments-page .payment-table-heading span { color: #64748b; font-size: 12px; }
+.admin-payments-page .payment-table-wrap { overflow-x: auto; }
+.admin-payments-page table { width: 100%; border-collapse: collapse; }
+.admin-payments-page th,
+.admin-payments-page td { padding: 14px 15px; border-bottom: 1px solid #edf2f7; text-align: left; white-space: nowrap; }
+.admin-payments-page th { background: #f8fafc; color: #64748b; font-size: 10px; letter-spacing: .05em; text-transform: uppercase; }
+.admin-payments-page td { color: #334155; font-size: 12px; }
+.admin-payments-page .transaction { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
+.admin-payments-page .amount { color: #0f172a; font-weight: 800; }
+.admin-payments-page .payment-status { display: inline-flex; padding: 5px 8px; border-radius: 999px; background: #e2e8f0; color: #475569; font-size: 10px; font-weight: 800; }
+.admin-payments-page .status-completed { background: #d1fae5; color: #047857; }
+.admin-payments-page .status-pending { background: #fef3c7; color: #a16207; }
+.admin-payments-page .status-failed { background: #fee2e2; color: #b91c1c; }
+.admin-payments-page .status-refunded { background: #ede9fe; color: #6d28d9; }
+.admin-payments-page .payment-empty { padding: 50px 20px; color: #64748b; text-align: center; }
+.admin-payments-page .payment-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 17px; }
+.admin-payments-page .payment-pagination a,
+.admin-payments-page .payment-pagination span { min-height: 36px; min-width: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 12px; }
+.admin-payments-page .payment-pagination a { background: #eff6ff; color: #1d4ed8; font-weight: 700; }
+.admin-payments-page .payment-pagination span { background: #2563eb; color: #fff; }
+.admin-payments-page .payment-pagination .disabled { background: #e2e8f0; color: #64748b; opacity: .65; }
+@media (max-width: 1100px) {
+    .admin-payments-page .payment-filter-card form { grid-template-columns: repeat(2, 1fr); }
+    .admin-payments-page .wide,
+    .admin-payments-page .payment-filter-actions { grid-column: span 2; }
 }
-
-@media (max-width: 600px) {
-    .page-shell { width: min(100% - 20px, 1240px); padding-top: 24px; }
-    .filter-card form { grid-template-columns: 1fr; }
-    .wide, .actions { grid-column: auto; }
-    .actions { flex-direction: column; }
-    .table-heading { align-items: start; flex-direction: column; gap: 8px; }
+@media (max-width: 620px) {
+    .admin-payments-page .payment-filter-card form { grid-template-columns: 1fr; }
+    .admin-payments-page .wide,
+    .admin-payments-page .payment-filter-actions { grid-column: auto; }
+    .admin-payments-page .payment-filter-actions { flex-direction: column; }
+    .admin-payments-page .payment-table-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
 }

@@ -18,8 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,7 +30,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(AuthWebController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtProperties.class})
+@Import({
+        SecurityConfig.class,
+        JwtAuthenticationFilter.class,
+        JwtProperties.class
+})
 @DisplayName("AuthWebController - Session Login Tests")
 class WebAuthControllerTest {
 
@@ -53,34 +57,96 @@ class WebAuthControllerTest {
     private PasswordEncoder passwordEncoder;
 
     @Test
-    @DisplayName("GET /login renders the moderator login form")
-    void givenAnonymousUser_whenOpenLogin_thenRenderLoginForm() throws Exception {
-        mockMvc.perform(get("/login"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("login"))
-                .andExpect(content().string(containsString("Đăng nhập quản trị")));
+    @DisplayName("GET /login renders the API-backed moderator login form")
+    void givenAnonymousUser_whenOpenLogin_thenRenderLoginForm()
+            throws Exception {
+
+        mockMvc.perform(
+                        get("/login")
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        view().name(
+                                "auth/login"
+                        )
+                )
+                .andExpect(
+                        content().string(
+                                containsString(
+                                        "/api/auth/login"
+                                )
+                        )
+                )
+                .andExpect(
+                        content().string(
+                                containsString(
+                                        "/moderator/users"
+                                )
+                        )
+                );
     }
 
     @Test
     @DisplayName("Valid moderator credentials create a reusable web session")
-    void givenValidModeratorCredentials_whenLogin_thenStoreSecurityContextInSession() throws Exception {
-        given(customUserDetailsService.loadUserByUsername("moderator@test.com"))
-                .willReturn(org.springframework.security.core.userdetails.User
-                        .withUsername("moderator@test.com")
-                        .password(passwordEncoder.encode("secret123"))
-                        .roles("MODERATOR")
-                        .build());
+    void givenValidModeratorCredentials_whenLogin_thenStoreSecurityContextInSession()
+            throws Exception {
 
-        MvcResult result = mockMvc.perform(post("/login")
-                        .with(csrf())
-                        .param("username", "moderator@test.com")
-                        .param("password", "secret123"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/moderator/venues"))
-                .andReturn();
+        given(
+                customUserDetailsService.loadUserByUsername(
+                        "moderator@test.com"
+                )
+        ).willReturn(
+                org.springframework.security.core.userdetails.User
+                        .withUsername(
+                                "moderator@test.com"
+                        )
+                        .password(
+                                passwordEncoder.encode(
+                                        "secret123"
+                                )
+                        )
+                        .roles(
+                                "MODERATOR"
+                        )
+                        .build()
+        );
 
-        assertThat(result.getRequest().getSession(false)).isNotNull();
-        assertThat(result.getRequest().getSession(false)
-                .getAttribute("SPRING_SECURITY_CONTEXT")).isNotNull();
+        MvcResult result =
+                mockMvc.perform(
+                                post("/login")
+                                        .with(csrf())
+                                        .param(
+                                                "username",
+                                                "moderator@test.com"
+                                        )
+                                        .param(
+                                                "password",
+                                                "secret123"
+                                        )
+                        )
+                        .andExpect(
+                                status().is3xxRedirection()
+                        )
+                        .andExpect(
+                                redirectedUrl(
+                                        "/moderator/users"
+                                )
+                        )
+                        .andReturn();
+
+        assertThat(
+                result.getRequest()
+                        .getSession(false)
+        ).isNotNull();
+
+        assertThat(
+                result.getRequest()
+                        .getSession(false)
+                        .getAttribute(
+                                "SPRING_SECURITY_CONTEXT"
+                        )
+        ).isNotNull();
     }
 }

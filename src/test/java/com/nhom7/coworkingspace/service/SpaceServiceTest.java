@@ -7,6 +7,7 @@ import com.nhom7.coworkingspace.dto.request.SpaceUpdateRequest;
 import com.nhom7.coworkingspace.dto.response.PageResponse;
 import com.nhom7.coworkingspace.dto.response.SpaceResponse;
 import com.nhom7.coworkingspace.entity.Space;
+import com.nhom7.coworkingspace.entity.Role;
 import com.nhom7.coworkingspace.entity.User;
 import com.nhom7.coworkingspace.entity.Venue;
 import com.nhom7.coworkingspace.enums.SpaceStatus;
@@ -82,6 +83,7 @@ class SpaceServiceTest {
                 .id(2L)
                 .email("manager@example.com")
                 .name("New Manager")
+                .roles(new HashSet<>(Set.of(Role.builder().id(2L).name("HOST").build())))
                 .build();
 
         mockVenue = Venue.builder()
@@ -221,6 +223,48 @@ class SpaceServiceTest {
     }
 
     @Test
+    @DisplayName("Should reject an unsupported price unit instead of defaulting to HOUR")
+    void givenInvalidPriceUnit_whenCreateSpace_thenThrowBadRequest() {
+        SpaceCreateRequest request = SpaceCreateRequest.builder()
+                .name("Invalid Price Unit")
+                .capacity(5)
+                .price(new BigDecimal("100000"))
+                .priceUnit("WEEK")
+                .openTime(LocalTime.of(8, 0))
+                .closeTime(LocalTime.of(18, 0))
+                .build();
+        given(venueRepository.findByIdAndDeletedFalse(100L)).willReturn(Optional.of(mockVenue));
+
+        assertThatThrownBy(() -> spaceService.createSpace(100L, request, "host@example.com"))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> assertThat(((AppException) ex).getMessageKey())
+                        .isEqualTo("validation.space.priceUnit.invalid"));
+    }
+
+    @Test
+    @DisplayName("Should reject invalid search ranges and pagination")
+    void givenInvalidSearchInput_whenSearchSpaces_thenThrowBadRequest() {
+        SpaceSearchRequest invalidRange = SpaceSearchRequest.builder()
+                .minPrice(new BigDecimal("500000"))
+                .maxPrice(new BigDecimal("100000"))
+                .page(0)
+                .size(10)
+                .sortBy("id")
+                .sortDir("ASC")
+                .build();
+
+        assertThatThrownBy(() -> spaceService.searchSpaces(invalidRange))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> assertThat(((AppException) ex).getMessageKey())
+                        .isEqualTo("validation.space.priceRange.invalid"));
+
+        assertThatThrownBy(() -> spaceService.getMySpaces("host@example.com", 0, 0))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> assertThat(((AppException) ex).getMessageKey())
+                        .isEqualTo("validation.size.min"));
+    }
+
+    @Test
     @DisplayName("Should throw AppException when host does not own the venue")
     void givenUnauthorizedHost_whenCreateSpace_thenThrowForbidden() {
         SpaceCreateRequest request = SpaceCreateRequest.builder()
@@ -304,6 +348,30 @@ class SpaceServiceTest {
                 .hasMessage("user.not.found")
                 .extracting("status")
                 .isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("Should reject a manager without HOST role")
+    void givenNonHostUser_whenAddManagerToSpace_thenThrowBadRequest() {
+        AddSpaceManagerRequest managerRequest = AddSpaceManagerRequest.builder()
+                .userId(2L)
+                .build();
+        User regularUser = User.builder()
+                .id(2L)
+                .email("user@example.com")
+                .roles(new HashSet<>(Set.of(Role.builder().id(1L).name("USER").build())))
+                .build();
+
+        given(spaceRepository.findById(10L)).willReturn(Optional.of(mockSpace));
+        given(userRepository.findById(2L)).willReturn(Optional.of(regularUser));
+
+        assertThatThrownBy(() -> spaceService.addManagerToSpace(10L, managerRequest, "host@example.com"))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> {
+                    AppException appException = (AppException) ex;
+                    assertThat(appException.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(appException.getMessageKey()).isEqualTo("space.manager.host.required");
+                });
     }
 
     @Test

@@ -50,19 +50,26 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("""
             SELECT payment
             FROM Payment payment
-            WHERE (:keyword IS NULL
+            WHERE payment.status IN :supportedStatuses
+              AND (:keywordMissing = true
                    OR LOWER(payment.transactionId) LIKE LOWER(CONCAT('%', :keyword, '%')))
-              AND (:status IS NULL OR payment.status = :status)
-              AND (:paymentMethod IS NULL
+              AND (:statusMissing = true OR payment.status = :status)
+              AND (:paymentMethodMissing = true
                    OR UPPER(payment.paymentMethod) = UPPER(:paymentMethod))
-              AND (:fromPaidAt IS NULL OR payment.paidAt >= :fromPaidAt)
-              AND (:toPaidAtExclusive IS NULL OR payment.paidAt < :toPaidAtExclusive)
+              AND (:fromPaidAtMissing = true OR payment.paidAt >= :fromPaidAt)
+              AND (:toPaidAtMissing = true OR payment.paidAt < :toPaidAtExclusive)
             """)
     Page<Payment> searchPayments(
+            @Param("supportedStatuses") List<PaymentStatus> supportedStatuses,
+            @Param("keywordMissing") boolean keywordMissing,
             @Param("keyword") String keyword,
+            @Param("statusMissing") boolean statusMissing,
             @Param("status") PaymentStatus status,
+            @Param("paymentMethodMissing") boolean paymentMethodMissing,
             @Param("paymentMethod") String paymentMethod,
+            @Param("fromPaidAtMissing") boolean fromPaidAtMissing,
             @Param("fromPaidAt") LocalDateTime fromPaidAt,
+            @Param("toPaidAtMissing") boolean toPaidAtMissing,
             @Param("toPaidAtExclusive") LocalDateTime toPaidAtExclusive,
             Pageable pageable);
 }

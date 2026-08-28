@@ -1,83 +1,48 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tổng quan hệ thống</title>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/moderator-layout :: layout('Thống kê hệ thống', 'statistics', ~{::section})}">
+<section class="admin-statistics-page">
     <link rel="stylesheet" th:href="@{/css/admin-statistics.css}">
-</head>
-<body>
-<main class="dashboard">
-    <header class="page-header">
-        <div>
-            <p class="eyebrow">ADMIN DASHBOARD</p>
-            <h1>Tổng quan hệ thống</h1>
-            <p class="subtitle">Theo dõi hoạt động và doanh thu của không gian làm việc.</p>
-        </div>
+
+    <header class="page-header statistics-header">
+        <p class="page-description">Theo dõi hoạt động và doanh thu của không gian làm việc.</p>
         <form class="year-filter" method="get" th:action="@{/admin/statistics}">
             <label for="year">Năm thống kê</label>
-            <div>
-                <input id="year" name="year" type="number" min="2000"
-                       th:max="${currentYear + 1}" th:value="${selectedYear}" required>
-                <button type="submit">Xem báo cáo</button>
-            </div>
+            <div><input id="year" name="year" type="number" min="2000"
+                        th:max="${currentYear + 1}" th:value="${selectedYear}" required>
+                <button type="submit">Xem báo cáo</button></div>
         </form>
     </header>
 
-    <section class="alert" role="alert" th:if="${loadError}">
+    <section class="alert alert-error" role="alert" th:if="${loadError}">
         Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.
     </section>
 
     <div th:unless="${loadError}">
         <section class="metric-grid" aria-label="Chỉ số tổng quan">
-            <article class="metric-card users">
-                <span>Tổng người dùng</span>
-                <strong th:text="${#numbers.formatInteger(overview.totalUsers, 1, 'COMMA')}">0</strong>
-                <small>Tài khoản trên hệ thống</small>
-            </article>
-            <article class="metric-card bookings">
-                <span>Booking thành công</span>
-                <strong th:text="${#numbers.formatInteger(overview.successfulBookings, 1, 'COMMA')}">0</strong>
-                <small>Booking đã hoàn thành</small>
-            </article>
-            <article class="metric-card venues">
-                <span>Venue hoạt động</span>
-                <strong th:text="${#numbers.formatInteger(overview.activeVenues, 1, 'COMMA')}">0</strong>
-                <small>Địa điểm đang được mở</small>
-            </article>
-            <article class="metric-card revenue">
-                <span>Doanh thu năm</span>
+            <article class="metric-card users"><span>Tổng người dùng</span>
+                <strong th:text="${#numbers.formatInteger(overview.totalUsers, 1, 'COMMA')}">0</strong><small>Tài khoản trên hệ thống</small></article>
+            <article class="metric-card bookings"><span>Booking thành công</span>
+                <strong th:text="${#numbers.formatInteger(overview.successfulBookings, 1, 'COMMA')}">0</strong><small>Booking đã hoàn thành</small></article>
+            <article class="metric-card venues"><span>Venue hoạt động</span>
+                <strong th:text="${#numbers.formatInteger(overview.activeVenues, 1, 'COMMA')}">0</strong><small>Địa điểm đang được mở</small></article>
+            <article class="metric-card revenue"><span>Doanh thu năm</span>
                 <strong th:text="${#numbers.formatDecimal(revenue.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</strong>
-                <small th:text="'Tổng doanh thu năm ' + ${selectedYear}">Tổng doanh thu</small>
-            </article>
+                <small th:text="'Tổng doanh thu năm ' + ${selectedYear}">Tổng doanh thu</small></article>
         </section>
 
         <section class="chart-card">
-            <div class="section-heading">
-                <div>
-                    <p class="eyebrow">DOANH THU</p>
-                    <h2 th:text="'Theo tháng · ' + ${selectedYear}">Theo tháng</h2>
-                </div>
-                <span>Đơn vị: VNĐ</span>
-            </div>
-
-            <p class="empty-state" th:if="${revenue.totalRevenue.signum() == 0}">
-                Chưa có giao dịch hoàn thành trong năm này.
-            </p>
-
+            <div class="section-heading"><div><span>Doanh thu</span><h2 th:text="'Theo tháng · ' + ${selectedYear}">Theo tháng</h2></div><span>Đơn vị: VNĐ</span></div>
+            <p class="statistics-empty" th:if="${revenue.totalRevenue.signum() == 0}">Chưa có giao dịch hoàn thành trong năm này.</p>
             <div class="bar-chart" th:unless="${revenue.totalRevenue.signum() == 0}">
                 <div class="bar-row" th:each="item : ${revenueBars}">
                     <span class="month" th:text="'T' + ${item.month}">T1</span>
-                    <div class="bar-track">
-                        <div class="bar-fill" th:style="'width:' + ${item.percentage} + '%'">
-                            <span class="sr-only" th:text="${item.percentage} + '%'">0%</span>
-                        </div>
-                    </div>
+                    <div class="bar-track"><div class="bar-fill" th:style="'width:' + ${item.percentage} + '%'">
+                        <span class="sr-only" th:text="${item.percentage} + '%'">0%</span></div></div>
                     <strong th:text="${#numbers.formatDecimal(item.revenue, 0, 'COMMA', 0, 'POINT')}">0</strong>
                 </div>
             </div>
         </section>
     </div>
-</main>
-</body>
+</section>
 </html>

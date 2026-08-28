@@ -113,19 +113,6 @@
 
         </form>
 
-
-        <div class="login-register">
-
-            <span>
-                Chưa có tài khoản?
-            </span>
-
-            <a th:href="@{/register}">
-                Đăng ký ngay
-            </a>
-
-        </div>
-
     </section>
 
 </main>
@@ -228,13 +215,12 @@
 
 
         /*
-         * Trang login này chỉ phục vụ khu vực quản trị
-         * (Moderator Web UI).
+         * Trang login này chỉ phục vụ khu vực quản trị.
          *
          * ADMIN kế thừa quyền Moderator.
          *
-         * USER / HOST không được phép đăng nhập tại đây,
-         * kể cả khi email/mật khẩu đúng.
+         * USER / HOST không được phép truy cập
+         * Management Web UI.
          */
         if (
             !roles.includes("ADMIN")
@@ -368,6 +354,10 @@
                 );
 
 
+                /*
+                 * Sau khi API login thành công,
+                 * chuyển về trang chính của Management.
+                 */
                 window.location.replace(
                     "/moderator/users"
                 );

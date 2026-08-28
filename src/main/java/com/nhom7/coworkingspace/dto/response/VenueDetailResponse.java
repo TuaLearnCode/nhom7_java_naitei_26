@@ -1,24 +1,23 @@
 package com.nhom7.coworkingspace.dto.response;
 
 import com.nhom7.coworkingspace.enums.VenueStatus;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class VenueResponse {
+public class VenueDetailResponse {
 
     private Long id;
-
-    // Owner (HOST) information
-    private Long ownerId;
-    private String ownerName;
-
     private String name;
     private String description;
     private String address;
@@ -28,6 +27,11 @@ public class VenueResponse {
     private BigDecimal longitude;
     private VenueStatus status;
     private String blockReason;
+    private VenueHostResponse host;
 
-    private List<AmenityResponse> amenities;
+    @Builder.Default
+    private List<AmenityResponse> amenities = List.of();
+
+    @Builder.Default
+    private List<SpaceResponse> spaces = List.of();
 }

@@ -8,7 +8,7 @@ public class AuthWebController {
 
     @GetMapping("/login")
     public String loginPage() {
-        return "login";
+        return "auth/login";
     }
 
     @GetMapping("/register")

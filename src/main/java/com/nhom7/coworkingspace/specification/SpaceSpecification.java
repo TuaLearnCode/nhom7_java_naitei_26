@@ -71,8 +71,8 @@ public class SpaceSpecification {
 
             // Filter by price unit (hour, day, month)
             if (request.getPriceUnit() != null && !request.getPriceUnit().trim().isEmpty()) {
-                String unitPattern = "%" + request.getPriceUnit().trim().toLowerCase() + "%";
-                predicates.add(cb.like(cb.lower(root.get("priceUnit")), unitPattern));
+                String normalizedUnit = request.getPriceUnit().trim().toLowerCase();
+                predicates.add(cb.equal(cb.lower(root.get("priceUnit")), normalizedUnit));
             }
 
             // Filter by daily operating openTime (space open <= requested open)
@@ -105,4 +105,3 @@ public class SpaceSpecification {
         };
     }
 }
-

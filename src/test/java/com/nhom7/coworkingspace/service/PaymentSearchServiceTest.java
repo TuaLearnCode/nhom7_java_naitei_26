@@ -52,9 +52,10 @@ class PaymentSearchServiceTest {
                 .paidAt(LocalDateTime.of(2026, 8, 20, 9, 0))
                 .build();
         given(paymentRepository.searchPayments(
-                eq("TXN"), eq(PaymentStatus.COMPLETED), eq("MOMO"),
-                eq(LocalDateTime.of(2026, 8, 1, 0, 0)),
-                eq(LocalDateTime.of(2026, 9, 1, 0, 0)), any(Pageable.class)))
+                eq(List.of(PaymentStatus.values())),
+                eq(false), eq("TXN"), eq(false), eq(PaymentStatus.COMPLETED), eq(false), eq("MOMO"),
+                eq(false), eq(LocalDateTime.of(2026, 8, 1, 0, 0)),
+                eq(false), eq(LocalDateTime.of(2026, 9, 1, 0, 0)), any(Pageable.class)))
                 .willReturn(new PageImpl<>(List.of(payment)));
 
         PageResponse<PaymentResponse> result = service.searchPayments(PaymentSearchRequest.builder()
@@ -73,11 +74,32 @@ class PaymentSearchServiceTest {
         });
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
         verify(paymentRepository).searchPayments(
-                eq("TXN"), eq(PaymentStatus.COMPLETED), eq("MOMO"),
-                eq(LocalDateTime.of(2026, 8, 1, 0, 0)),
-                eq(LocalDateTime.of(2026, 9, 1, 0, 0)), pageable.capture());
+                eq(List.of(PaymentStatus.values())),
+                eq(false), eq("TXN"), eq(false), eq(PaymentStatus.COMPLETED), eq(false), eq("MOMO"),
+                eq(false), eq(LocalDateTime.of(2026, 8, 1, 0, 0)),
+                eq(false), eq(LocalDateTime.of(2026, 9, 1, 0, 0)), pageable.capture());
         assertThat(pageable.getValue().getPageNumber()).isZero();
         assertThat(pageable.getValue().getPageSize()).isEqualTo(100);
         assertThat(pageable.getValue().getSort().getOrderFor("paidAt").isDescending()).isTrue();
+    }
+
+    @Test
+    void searchPaymentsUsesTypedSentinelsForMissingFilters() {
+        StatisticsService service = new StatisticsServiceImpl(
+                userRepository, bookingRepository, venueRepository, paymentRepository);
+        given(paymentRepository.searchPayments(
+                eq(List.of(PaymentStatus.values())),
+                eq(true), eq(""), eq(true), eq(PaymentStatus.COMPLETED), eq(true), eq(""),
+                eq(true), eq(LocalDateTime.of(1970, 1, 1, 0, 0)),
+                eq(true), eq(LocalDateTime.of(9999, 12, 31, 23, 59)), any(Pageable.class)))
+                .willReturn(new PageImpl<>(List.of()));
+
+        service.searchPayments(PaymentSearchRequest.builder().build());
+
+        verify(paymentRepository).searchPayments(
+                eq(List.of(PaymentStatus.values())),
+                eq(true), eq(""), eq(true), eq(PaymentStatus.COMPLETED), eq(true), eq(""),
+                eq(true), eq(LocalDateTime.of(1970, 1, 1, 0, 0)),
+                eq(true), eq(LocalDateTime.of(9999, 12, 31, 23, 59)), any(Pageable.class));
     }
 }

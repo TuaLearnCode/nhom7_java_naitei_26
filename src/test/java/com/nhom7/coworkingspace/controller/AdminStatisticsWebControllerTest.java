@@ -28,6 +28,7 @@ import java.util.List;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -65,7 +66,14 @@ class AdminStatisticsWebControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/statistics"))
                 .andExpect(model().attribute("selectedYear", 2025))
-                .andExpect(model().attributeExists("overview", "revenue", "revenueBars"));
+                .andExpect(model().attributeExists("overview", "revenue", "revenueBars"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("class=\"moderator-layout\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"/admin/statistics\""
+                )))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "class=\"sidebar-link  active\""
+                )));
     }
 
     @Test
